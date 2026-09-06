@@ -12,8 +12,10 @@
   "intent": true,
   "routerOnly": true,
   "version": 1,
+  "addOns": true,
   "framework": "react",
   "chosenAddOns": [
-    "eslint"
+    "eslint",
+    "tanstack-query"
   ]
 }

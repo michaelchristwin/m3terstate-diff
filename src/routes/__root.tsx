@@ -4,6 +4,7 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 
 import '../styles.css'
+import TanstackQueryProvider from '#/integrations/tanstack-query/root-provider'
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -12,7 +13,9 @@ export const Route = createRootRoute({
 function RootComponent() {
   return (
     <>
-      <Outlet />
+      <TanstackQueryProvider>
+        <Outlet />
+      </TanstackQueryProvider>
       <TanStackDevtools
         config={{
           position: 'bottom-right',
