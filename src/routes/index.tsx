@@ -1,3 +1,4 @@
+import { useViewportHeight } from '#/hooks/useViewportHeight'
 import { queries } from '#/queries/state'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
@@ -9,7 +10,7 @@ export const Route = createFileRoute('/')({ component: Home })
 function Home() {
   const [offsetA, setOffsetA] = useState(1)
   const [offsetB, setOffsetB] = useState(2)
-
+  const height = useViewportHeight()
   const { data, isLoading: isLoadingRecentBlocks } = useQuery(
     queries.getRecentBlocks(),
   )
@@ -50,7 +51,7 @@ function Home() {
             newValue={diffRight}
             leftTitle={`Proposal ${data ? data.length - offsetB : 0}`}
             rightTitle={`Proposal ${data ? data.length - offsetA : 0}`}
-            height={window.screen.availHeight}
+            height={height}
             theme="github-dark"
             reviewMode
           />
