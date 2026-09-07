@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": true,
+    "outDir": "dist/lib",
+    "noEmit": false,
+    "allowImportingTsExtensions": false,
+    "rootDir": "src"
+  },
+  "include": [
+    "src/diff.ts"
+  ]
+}

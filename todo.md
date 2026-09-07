@@ -1,0 +1,10 @@
+- [x] When I hover on the status column of each row show the difference between the newer and older nonces.
+- [x] Increase the font sizes of the smaller text on the UI.
+- [x] Create a visible gap between the 2 tables
+- [x] Rename "proposal" to "state" on the UI.
+- [x] "m3ter_no" column is redundant, retain only one to serve both tables.
+- [x] Drop the outer column named "Row".
+- [x] Create a sticky navigation tool that scrolls to lines with diffs 1 after the other on click. It should be visible only when "Differences only" is unchecked.
+- [x] Remove this "CSV columns: m3ter_no, account, nonce" from those cards.
+- [x] Remove the "Removed" counter block.
+- [x] The state for "Differences only" should be persistent across reloads probably using localstorage.

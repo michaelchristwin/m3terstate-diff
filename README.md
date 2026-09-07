@@ -1,194 +1,76 @@
-Welcome to your new TanStack Start app!
+# m3ters / Diff
 
-# Getting Started
+A Vite + React state comparison workbench using TanStack Router, TanStack Query, Hey API, and Bun. It loads the two latest proposals from m3terscan, converts their meter records to CSV with `json-2-csv`, and automatically highlights differing records side by side.
 
-To run this application:
+## Run
 
-```bash
+Requires Bun 1.4+ and Node.js 22.12+ for the Vite/tooling executables.
+
+```sh
 bun install
-bun --bun run dev
+bun run dev
 ```
 
-# Building For Production
+Open http://localhost:3000 (use `localhost`, not `127.0.0.1`: the API allows localhost ports 3000 and 5173 through CORS). Both development and preview default to port 3000. The TanStack scaffold was created with:
 
-To build this application for production:
-
-```bash
-bun --bun run build
+```sh
+bunx @tanstack/cli create m3ters-diff --router-only --add-ons tanstack-query
+bun add @hey-api/vite-plugin -D
 ```
 
-## Styling
+The current CLI ignores add-ons in router-only mode, so TanStack Query was installed and wired manually. The app lives in `m3ters-diff/`; run the commands from that directory.
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
+## State workflow
 
-### Removing Tailwind CSS
+- GET `/recent-blocks` supplies history in API order (oldest first). The last two entries are selected initially.
+- `queries.getProposals(txHash)` uses the generated SDK and returns a CSV string. It validates the response and fixes the columns to `m3ter_no,account,nonce`, retaining API record order.
+- **Compare previous state** moves both selections one position backward. It is disabled while loading or at the oldest pair. **Back to latest** resets the selection.
+- Queries share cached proposal responses by transaction hash. Errors throw and show a retry button; missing hashes never trigger requests.
+- **Refresh history** explicitly POSTs `/recent-blocks` via a mutation, then invalidates the history GET query and resets to the latest pair. The API may process its refresh asynchronously; a subsequent refresh may be necessary if its returned history has not updated yet.
+- The viewer has a shared meter column, separated state columns, 100-record pagination, and full JSON export. Hover or focus a status to see newer nonce minus previous nonce; missing records have no numeric delta.
+- **Differences only** persists in localStorage (and still works if storage is unavailable). When unchecked, the sticky **Previous difference / Next difference** controls scroll through differences across pages.
+- Visible counters exclude the CSV header and show Unchanged, Changed, and Added. Removed rows and their exported counts are retained.
 
-If you prefer not to use Tailwind CSS:
+## API generation
 
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Remove `@tailwindcss/vite` and `tailwindcss` from `package.json`
+`openapi-ts.config.ts` uses the requested live schema:
 
-## Linting & Formatting
+```ts
+import { defineConfig } from '@hey-api/openapi-ts'
 
-
-This project uses [eslint](https://eslint.org/) and [prettier](https://prettier.io/) for linting and formatting. Eslint is configured using [tanstack/eslint-config](https://tanstack.com/config/latest/docs/eslint). The following scripts are available:
-
-```bash
-bun --bun run lint
-bun --bun run format
-bun --bun run check
-```
-
-
-
-## Routing
-
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
+export default defineConfig({
+  input: 'https://m3terscan-api.onrender.com/openapi.json',
+  output: 'src/client',
 })
 ```
 
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
+The Hey API Vite plugin generates the client on development startup and build. Run `bun run generate-client` to regenerate it separately. Generated code in `src/client` should not be edited by hand. Generation requires network access and an available schema endpoint. Browser requests require the API to allow the site's origin through CORS.
 
-## Server Functions
+## Reusable comparison module
 
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
+`src/diff.ts` is independent of React and the DOM and works in frontend/backend TypeScript with Papa Parse installed:
 
-```tsx
-import { createServerFn } from '@tanstack/react-start'
+```ts
+import { compareInputs } from './src/diff'
 
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
-}
+const result = compareInputs('id,name\n1,Ada', 'id,name\n1,Grace\n2,Lin')
+console.log(result.differentIndices) // [1, 2]
+// result.rows: { index, status, left, right }[]
+// result.counts: { equal, changed, added, removed }
 ```
 
-## API Routes
+Records compare by position, not meter identity or sequence alignment. Headers count at index 0 in exports. The viewer shows only meter records, with a shared `m3ter_no` column; mismatched meter numbers appear as previous → newer. Middle insertions shift subsequent comparisons. CSV fields are decoded before equality checks. BOM and line endings are normalized, a final newline does not add a record, and blank records are retained. Text mode and optional trimming remain available in the module.
 
-You can create API routes by using the `server` property in your route definitions:
+## Checks and deployment
 
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
+```sh
+bun run test
+bun run typecheck
+bunx playwright install chromium
+bun run test:e2e
+bun run build
 ```
 
-## Data Fetching
+Unit tests cover comparison rules, CSV conversion and invalid payloads. Browser tests mock API requests to verify navigation, cache reuse, loading, errors/retry, history boundaries, refresh, and export without modifying the live API.
 
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+Build output is a static site in `dist/` plus reusable JavaScript/types in `dist/lib/`. Deploy `dist/` to a static host. Browser comparison is synchronous and keeps the parsed proposals in memory; pagination limits DOM size, not parsing memory.

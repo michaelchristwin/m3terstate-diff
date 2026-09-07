@@ -1,5 +1,5 @@
 {
-  "name": "m3terstate-diff",
+  "name": "m3ters-diff",
   "private": true,
   "type": "module",
   "imports": {
@@ -8,43 +8,40 @@
   "scripts": {
     "dev": "vite dev --port 3000",
     "generate-routes": "tsr generate",
-    "build": "vite build",
-    "preview": "vite preview",
-    "lint": "eslint",
-    "format": "prettier --write . && eslint --fix",
-    "check": "prettier --check ."
+    "build": "vite build && tsc --noEmit && tsc -p tsconfig.lib.json",
+    "preview": "vite preview --port 3000",
+    "typecheck": "tsc --noEmit",
+    "generate-client": "openapi-ts",
+    "test": "bun test ./tests",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-devtools": "latest",
-    "@tanstack/react-query": "latest",
-    "@tanstack/react-query-devtools": "latest",
+    "@tanstack/react-query": "^5.102.8",
     "@tanstack/react-router": "latest",
     "@tanstack/react-router-devtools": "latest",
+    "json-2-csv": "^5.6.0",
+    "papaparse": "^5.7.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "tailwindcss": "^4.1.18",
-    "virtual-react-json-diff": "^1.0.20"
+    "tailwindcss": "^4.1.18"
   },
   "devDependencies": {
+    "@hey-api/openapi-ts": "^0.99.0",
     "@hey-api/vite-plugin": "^0.3.2",
+    "@playwright/test": "^1.63.0",
     "@tanstack/devtools-vite": "latest",
-    "@tanstack/eslint-config": "latest",
     "@tanstack/router-cli": "^1.132.0",
     "@tanstack/router-plugin": "latest",
+    "@types/bun": "^1.4.1",
     "@types/node": "^22.10.2",
+    "@types/papaparse": "^5.5.2",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^6.0.1",
-    "eslint": "^9.20.0",
-    "prettier": "^3.8.1",
     "typescript": "^6.0.2",
     "vite": "^8.0.0"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "lightningcss"
-    ]
-  }
+  "packageManager": "bun@1.4.0"
 }
