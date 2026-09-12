@@ -27,9 +27,10 @@ The current CLI ignores add-ons in router-only mode, so TanStack Query was insta
 - **Compare previous state** moves both selections one position backward. It is disabled while loading or at the oldest pair. **Back to latest** resets the selection.
 - Queries share cached proposal responses by transaction hash. Errors throw and show a retry button; missing hashes never trigger requests.
 - **Refresh history** explicitly POSTs `/recent-blocks` via a mutation, then invalidates the history GET query and resets to the latest pair. The API may process its refresh asynchronously; a subsequent refresh may be necessary if its returned history has not updated yet.
-- The viewer has a shared meter column, separated state columns, 100-record pagination, and full JSON export. Hover or focus a status to see newer nonce minus previous nonce; missing records have no numeric delta.
+- The viewer has a shared meter column, separated state columns, 100-record pagination, and full JSON export. Hover anywhere on a changed row, or focus it with the keyboard, to see transaction (nonce) and energy (account, in kWh) differences on two lines. Both use newer minus previous. Other rows have no tooltip; Escape dismisses it.
 - **Differences only** persists in localStorage (and still works if storage is unavailable). When unchecked, the sticky **Previous difference / Next difference** controls scroll through differences across pages.
-- Visible counters exclude the CSV header and show Unchanged, Changed, and Added. Removed rows and their exported counts are retained.
+- Visible cards show Changed, Added, Total Transactions, and Total kWh. Totals sum signed deltas across all changed records, independent of pagination and filtering, using decimal arithmetic. Added/removed records are excluded from totals. Invalid numeric values make the affected total unavailable. Exported row statuses and counts are retained.
+- Transaction hashes link to Etherscan in a new tab, with an external-link icon.
 
 ## API generation
 

@@ -16,9 +16,15 @@ pre{font-size:13px}
 .state-table td:nth-child(2){border-right:0}
 .state-table tr.active-difference>:not(.state-gap){box-shadow:inset 0 2px #608847,inset 0 -2px #608847}
 .state-table tr{scroll-margin-block:110px}
-.status-cell{position:relative}.status-label{cursor:help;display:inline-block;outline-offset:4px}
-.status-label [role=tooltip]{display:none;position:absolute;right:8px;bottom:calc(100% - 5px);width:250px;background:#203b2e;color:#fff;padding:12px;border-radius:6px;box-shadow:0 4px 15px #0002;z-index:5;font:14px/1.5 sans-serif}
-.status-cell:hover [role=tooltip],.status-label:focus [role=tooltip]{display:block}
 .diff-navigation{position:sticky;bottom:18px;z-index:10;display:flex;align-items:center;justify-content:center;gap:20px;width:fit-content;max-width:100%;margin:22px auto 0;padding:12px;background:#fff;border:1px solid #cbd8c0;border-radius:12px;box-shadow:0 8px 30px #203b2e25}
 .diff-navigation span{font-size:14px;white-space:nowrap}
 @media(max-width:650px){.diff-navigation{gap:8px;flex-wrap:wrap;bottom:8px}.diff-navigation button{font-size:13px;padding:10px}.diff-navigation span{order:-1;flex-basis:100%;text-align:center}.table-toolbar{align-items:flex-start;flex-direction:column}#range{max-width:none}.results-heading{gap:12px}.state-meta dl div{flex-wrap:wrap}.state-status{max-width:125px}}
+
+.controls{margin-bottom:30px}
+.transaction-link{display:flex;align-items:center;gap:10px;color:#365040;text-decoration:underline;text-underline-offset:3px;margin:12px 0 20px}
+.transaction-link code{margin:0;min-width:0}.transaction-link svg{flex-shrink:0}
+.transaction-link:hover{color:#658841}.transaction-link:focus-visible{outline:2px solid #608847;outline-offset:4px}
+.stat{min-width:0;flex-wrap:wrap}.stat strong{overflow-wrap:anywhere}
+.stat.transactions,.stat.energy{background:#f4f7f0}
+.state-table tr.changed{cursor:help}.state-table tr.changed:focus{outline:2px solid #608847;outline-offset:-2px}
+.row-tooltip{position:fixed;z-index:30;pointer-events:none;background:#203b2e;color:white;padding:12px;border-radius:6px;box-shadow:0 4px 15px #0002;font:14px/1.6 sans-serif}

@@ -55,7 +55,6 @@ export function ProposalWorkbench() {
           <button className="primary" onClick={nextState} disabled={!canGoBack || isLoading || refresh.isPending}>Compare previous state <span>←</span></button>
         </div>
       </div>
-      <p className="note">Compared by position · CSV headers are included in exports · Inserted rows can shift subsequent comparisons{!canGoBack && blocks.length >= 2 ? ' · Beginning of history reached' : ''}</p>
       {refresh.isError && <p className="error" role="alert">History refresh failed. {errorMessage(refresh.error)}</p>}
       {error ? <div className="error" role="alert"><p>Unable to load the comparison. {errorMessage(error)}</p><button className="secondary" onClick={retry}>Retry</button></div> :
         isLoading ? <section className="results empty" role="status">Loading states…</section> :
@@ -74,6 +73,6 @@ function errorMessage(error: unknown) {
 function ProposalCard({ label, number, block, loading }: { label: string; number: string; block?: RecentBlocks; loading: boolean }) {
   return <article className="input-card">
     <div className="card-heading"><span><span className="badge">{number}</span>{label}</span><span className="state-status">{loading ? 'Loading…' : block ? (block.transaction_status ? 'Successful transaction' : 'Failed transaction') : 'Unavailable'}</span></div>
-    <div className="state-meta"><span className="eyebrow">TRANSACTION HASH</span><code>{block?.hash ?? 'Waiting for state history…'}</code><dl><div><dt>Block time</dt><dd>{block?.block_time ?? '—'}</dd></div><div><dt>From</dt><dd>{block?.from ?? '—'}</dd></div></dl></div>
+    <div className="state-meta"><span className="eyebrow">TRANSACTION HASH</span>{block ? <a className="transaction-link" href={`https://etherscan.io/tx/${encodeURIComponent(block.hash)}`} target="_blank" rel="noopener noreferrer" aria-label={`View transaction ${block.hash} on Etherscan (opens in a new tab)`}><code>{block.hash}</code><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M14 3h7v7M10 14 21 3M21 14v7H3V3h7" /></svg></a> : <code>Waiting for state history…</code>}<dl><div><dt>Block time</dt><dd>{block?.block_time ?? '—'}</dd></div><div><dt>From</dt><dd>{block?.from ?? '—'}</dd></div></dl></div>
   </article>
 }

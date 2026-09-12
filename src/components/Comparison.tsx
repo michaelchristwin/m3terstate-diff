@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { compareInputs } from '#/diff'
-import type { DiffResult, RowDiff } from '#/diff'
+import type { DiffResult } from '#/diff'
+import { formatDelta, stateTotals } from '#/state-deltas'
+import { RowTooltip } from './RowTooltip'
 
 const preferenceKey = 'm3ters-diff:only-differences'
 const pageSize = 100
@@ -9,12 +11,15 @@ export function Comparison({ oldValue, newValue }: { oldValue: string; newValue:
   const [onlyDifferences, setOnlyDifferences] = useState(() => {
     try { return localStorage.getItem(preferenceKey) === 'true' } catch { return false }
   })
+  const [tooltip, setTooltip] = useState<{ index: number; x: number; y: number } | null>(null)
   const [page, setPage] = useState(0)
   const [activeDifference, setActiveDifference] = useState(-1)
   const rowRefs = useRef(new Map<number, HTMLTableRowElement>())
   const result = useMemo(() => compareInputs(oldValue, newValue), [oldValue, newValue])
   // CSV headers become table headings, not a data record in the viewer.
   const records = useMemo(() => result.rows.slice(1), [result])
+  const totals = useMemo(() => stateTotals(records), [records])
+  const tooltipRow = tooltip ? records.find(row => row.index === tooltip.index) : undefined
   const differences = useMemo(() => records.filter(row => row.status !== 'equal'), [records])
   const visible = useMemo(() => onlyDifferences ? differences : records, [records, differences, onlyDifferences])
   const pages = Math.max(1, Math.ceil(visible.length / pageSize))
@@ -30,6 +35,21 @@ export function Comparison({ oldValue, newValue }: { oldValue: string; newValue:
     rowRefs.current.get(targetIndex)?.scrollIntoView({ block: 'center', behavior: 'instant' })
   }, [targetIndex, currentPage, onlyDifferences])
 
+  useEffect(() => {
+    if (!tooltip) return
+    const reposition = () => {
+      const row = rowRefs.current.get(tooltip.index)
+      if (!row || !row.matches(':hover, :focus')) { setTooltip(null); return }
+      const rect = row.getBoundingClientRect()
+      if (rect.bottom <= 0 || rect.top >= window.innerHeight) { setTooltip(null); return }
+      setTooltip(current => current ? { ...current, x: rect.left, y: Math.max(0, rect.top) } : null)
+    }
+    window.addEventListener('scroll', reposition, true)
+    window.addEventListener('resize', reposition)
+    return () => { window.removeEventListener('scroll', reposition, true); window.removeEventListener('resize', reposition) }
+  }, [tooltip?.index])
+  useEffect(() => { setTooltip(null) }, [currentPage, onlyDifferences])
+
   function navigateDifference(direction: number) {
     const next = activeDifference + direction
     const row = differences[next]
@@ -39,20 +59,27 @@ export function Comparison({ oldValue, newValue }: { oldValue: string; newValue:
   }
 
   return <>
+    {tooltip && tooltipRow && <RowTooltip row={tooltipRow} x={tooltip.x} y={tooltip.y} />}
     <section className="results" aria-label="Comparison results">
       <div className="results-heading"><div><div className="eyebrow">COMPARISON RESULTS</div><h2 aria-live="polite">{differences.length ? `${differences.length.toLocaleString()} ${differences.length === 1 ? 'record differs' : 'records differ'}.` : 'These states match.'}</h2></div><button className="secondary" onClick={() => exportResult(result)}>Export JSON ↓</button></div>
-      <div id="stats">{(['equal', 'changed', 'added'] as const).map(status => <div key={status} className={`stat ${status}`}><strong>{records.filter(row => row.status === status).length.toLocaleString()}</strong><span>{status === 'equal' ? 'Unchanged' : status === 'changed' ? 'Changed' : 'Added'}</span></div>)}</div>
+      <div id="stats">{(['changed', 'added'] as const).map(status => <div key={status} className={`stat ${status}`}><strong>{records.filter(row => row.status === status).length.toLocaleString()}</strong><span>{status === 'changed' ? 'Changed' : 'Added'}</span></div>)}<div className="stat transactions"><strong>{formatDelta(totals.transactions)}</strong><span>Total Transactions</span></div><div className="stat energy"><strong>{formatDelta(totals.energy)}</strong><span>Total kWh</span></div></div>
       <div className="table-toolbar"><label className="check"><input type="checkbox" checked={onlyDifferences} onChange={event => { setOnlyDifferences(event.target.checked); setPage(0); setActiveDifference(-1) }} />Differences only</label><span id="range">Exported indices are 0-based and include the CSV header.</span></div>
       <div className="table-wrap">
         {visible.length ? <table className="state-table">
-          <colgroup><col className="meter-col" /><col /><col className="nonce-col" /><col className="gap-col" /><col /><col className="nonce-col" /><col className="status-col" /></colgroup>
-          <thead><tr><th scope="col" rowSpan={2}>m3ter_no</th><th scope="colgroup" colSpan={2}>Previous state</th><th className="state-gap" rowSpan={2} aria-hidden="true" /><th scope="colgroup" colSpan={2}>Newer state</th><th scope="col" rowSpan={2}>Status</th></tr><tr><th scope="col">Account</th><th scope="col">Nonce</th><th scope="col">Account</th><th scope="col">Nonce</th></tr></thead>
-          <tbody>{visible.slice(currentPage * pageSize, (currentPage + 1) * pageSize).map(row => <tr key={row.index} data-record-index={row.index} ref={node => { if (node) rowRefs.current.set(row.index, node); else rowRefs.current.delete(row.index) }} className={`${row.status}${row.index === targetIndex ? ' active-difference' : ''}`}>
+          <colgroup><col className="meter-col" /><col /><col className="nonce-col" /><col className="gap-col" /><col /><col className="nonce-col" /></colgroup>
+          <thead><tr><th scope="col" rowSpan={2}>m3ter_no</th><th scope="colgroup" colSpan={2}>Previous state</th><th className="state-gap" rowSpan={2} aria-hidden="true" /><th scope="colgroup" colSpan={2}>Newer state</th></tr><tr><th scope="col">Account</th><th scope="col">Nonce</th><th scope="col">Account</th><th scope="col">Nonce</th></tr></thead>
+          <tbody>{visible.slice(currentPage * pageSize, (currentPage + 1) * pageSize).map(row => <tr key={row.index} data-record-index={row.index}
+            tabIndex={row.status === 'changed' ? 0 : undefined}
+            aria-describedby={tooltip?.index === row.index ? 'row-delta-tooltip' : undefined}
+            onMouseEnter={event => { if (row.status === 'changed') setTooltip({ index: row.index, x: event.clientX, y: event.clientY }) }}
+            onMouseMove={event => { if (row.status === 'changed') setTooltip({ index: row.index, x: event.clientX, y: event.clientY }) }}
+            onMouseLeave={() => setTooltip(null)}
+            onFocus={event => { if (row.status === 'changed') { const rect = event.currentTarget.getBoundingClientRect(); setTooltip({ index: row.index, x: rect.left, y: rect.top }) } }}
+            onBlur={() => setTooltip(null)} onKeyDown={event => { if (event.key === 'Escape') setTooltip(null) }} ref={node => { if (node) rowRefs.current.set(row.index, node); else rowRefs.current.delete(row.index) }} className={`${row.status}${row.index === targetIndex ? ' active-difference' : ''}`}>
             <th scope="row">{row.left && row.right && row.left[0] !== row.right[0] ? `${row.left[0]} → ${row.right[0]}` : (row.left?.[0] ?? row.right?.[0])}</th>
             <td>{row.left?.[1] ?? '—'}</td><td>{row.left?.[2] ?? '—'}</td>
             <td className="state-gap" aria-hidden="true" />
             <td>{row.right?.[1] ?? '—'}</td><td>{row.right?.[2] ?? '—'}</td>
-            <td className="status-cell"><span tabIndex={0} className="status-label" aria-describedby={`nonce-delta-${row.index}`}>{row.status === 'equal' ? 'Unchanged' : row.status}<span role="tooltip" id={`nonce-delta-${row.index}`}>{nonceDifference(row)}</span></span></td>
           </tr>)}</tbody>
         </table> : <div className="empty">{onlyDifferences ? 'No differences to show.' : 'These states contain no meter records.'}</div>}
       </div>
@@ -65,14 +92,6 @@ export function Comparison({ oldValue, newValue }: { oldValue: string; newValue:
       <button className="primary" disabled={activeDifference >= differences.length - 1} onClick={() => navigateDifference(1)}>Next difference ↓</button>
     </nav>}
   </>
-}
-
-function nonceDifference(row: RowDiff) {
-  if (!row.left || !row.right) return `Nonce difference unavailable: ${row.left ? 'newer' : 'previous'} state has no record.`
-  const oldNonce = Number(row.left[2]), newNonce = Number(row.right[2])
-  if (!Number.isFinite(oldNonce) || !Number.isFinite(newNonce)) return 'Nonce difference unavailable.'
-  const delta = newNonce - oldNonce
-  return `Nonce difference (newer − previous): ${delta > 0 ? '+' : ''}${delta}`
 }
 
 function exportResult(result: DiffResult) {
