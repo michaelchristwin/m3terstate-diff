@@ -1,1 +1,1570 @@
-{"openapi":"3.1.0","info":{"title":"M3terscan API","version":"0.1.0"},"paths":{"/":{"get":{"summary":"Read Root","description":"Welcome message to our users.","operationId":"read_root__get","responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{}}}}}}},"/recent-blocks":{"get":{"summary":"Get Recent Blocks","description":"Get latest blocks","operationId":"get_recent_blocks_recent_blocks_get","responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"items":{"additionalProperties":true,"type":"object"},"type":"array","title":"Response Get Recent Blocks Recent Blocks Get"}}}}}},"post":{"summary":"Execute Recent Blocks","description":"Execute query for recent blocks on dune","operationId":"execute_recent_blocks_recent_blocks_post","responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{}}}}}}},"/world-state":{"get":{"summary":"Get World State","description":"Lorem ipsum","operationId":"get_world_state_world_state_get","responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"items":{"additionalProperties":true,"type":"object"},"type":"array","title":"Response Get World State World State Get"}}}}}}},"/daily-batch":{"get":{"summary":"Get Daily Batch","description":"Get daily Batch","operationId":"get_daily_batch_daily_batch_get","parameters":[{"name":"meter_ids","in":"query","required":true,"schema":{"type":"array","items":{"type":"integer"},"description":"Repeat param: ?meter_ids=1&meter_ids=2","title":"Meter Ids"},"description":"Repeat param: ?meter_ids=1&meter_ids=2"}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"type":"object","additionalProperties":true,"title":"Response Get Daily Batch Daily Batch Get"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/meter/{meter_id}/daily":{"get":{"tags":["meter"],"summary":"Get Daily","description":"Get daily energy usage aggregate.","operationId":"get_daily_meter__meter_id__daily_get","parameters":[{"name":"meter_id","in":"path","required":true,"schema":{"type":"integer","title":"Meter Id"}}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/DailyResponse"},"title":"Response Get Daily Meter  Meter Id  Daily Get"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/meter/{meter_id}/weekly":{"get":{"tags":["meter"],"summary":"Get Weekly","description":"Get weekly energy usage aggregate.","operationId":"get_weekly_meter__meter_id__weekly_get","parameters":[{"name":"meter_id","in":"path","required":true,"schema":{"type":"integer","title":"Meter Id"}}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/WeeklyResponse"},"title":"Response Get Weekly Meter  Meter Id  Weekly Get"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/meter/{meter_id}/weeks/{year}":{"get":{"tags":["meter"],"summary":"Get Weeks Of Year","description":"Get energy usage of all weeks of specified year.","operationId":"get_weeks_of_year_meter__meter_id__weeks__year__get","parameters":[{"name":"meter_id","in":"path","required":true,"schema":{"type":"integer","title":"Meter Id"}},{"name":"year","in":"path","required":true,"schema":{"type":"integer","title":"Year"}}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/WeeksEnergyRead"},"title":"Response Get Weeks Of Year Meter  Meter Id  Weeks  Year  Get"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/meter/{meter_id}/month/{month}/{year}":{"get":{"tags":["meter"],"summary":"Get Month Of Year","description":"Get daily energy usage for a given month in a specified year.","operationId":"get_month_of_year_meter__meter_id__month__month___year__get","parameters":[{"name":"meter_id","in":"path","required":true,"schema":{"type":"integer","title":"Meter Id"}},{"name":"year","in":"path","required":true,"schema":{"type":"integer","title":"Year"}},{"name":"month","in":"path","required":true,"schema":{"type":"integer","title":"Month"}}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/MonthlyEnergyRead"},"title":"Response Get Month Of Year Meter  Meter Id  Month  Month   Year  Get"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/meter/{meter_id}/activities":{"get":{"tags":["meter"],"summary":"Get Activities","description":"Get activities of a m3ter\n\n :param m3ter_id: Description\n :type m3ter_id: int","operationId":"get_activities_meter__meter_id__activities_get","parameters":[{"name":"meter_id","in":"path","required":true,"schema":{"type":"integer","title":"Meter Id"}},{"name":"after","in":"query","required":false,"schema":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"After"}},{"name":"limit","in":"query","required":false,"schema":{"type":"integer","default":10,"title":"Limit"}}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/ActivitiesResponse"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/proposal/{tx_hash}":{"get":{"tags":["proposal"],"summary":"Get Proposal","description":"Retrieve proposal details by transaction hash.\n\nFirst checks the database cache. If not found, fetches from Ethereum\nblockchain, decodes the transaction data, and caches the results.\n\n:param tx_hash: Ethereum transaction hash\n:type tx_hash: str\n:return: List of proposal meter readings","operationId":"get_proposal_proposal__tx_hash__get","parameters":[{"name":"tx_hash","in":"path","required":true,"schema":{"type":"string","title":"Tx Hash"}}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/ProposalsResponse"},"title":"Response Get Proposal Proposal  Tx Hash  Get"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}}},"components":{"schemas":{"Activities":{"properties":{"timestamp":{"type":"integer","title":"Timestamp"},"energy":{"type":"number","title":"Energy"},"signature":{"type":"string","title":"Signature"}},"type":"object","required":["timestamp","energy","signature"],"title":"Activities","description":"Docstring for Activities"},"ActivitiesResponse":{"properties":{"data":{"items":{"$ref":"#/components/schemas/Activities"},"type":"array","title":"Data"},"limit":{"type":"integer","title":"Limit"},"next_cursor":{"type":"string","title":"Next Cursor"}},"type":"object","required":["data","limit","next_cursor"],"title":"ActivitiesResponse","description":"Docstring for ActivitiesResponse"},"DailyResponse":{"properties":{"hour_start_utc":{"type":"string","title":"Hour Start Utc"},"total_energy":{"type":"number","title":"Total Energy"}},"type":"object","required":["hour_start_utc","total_energy"],"title":"DailyResponse","description":"Response model for daily enpoint."},"HTTPValidationError":{"properties":{"detail":{"items":{"$ref":"#/components/schemas/ValidationError"},"type":"array","title":"Detail"}},"type":"object","title":"HTTPValidationError"},"MonthlyEnergyRead":{"properties":{"day":{"type":"integer","title":"Day"},"month":{"type":"integer","title":"Month"},"year":{"type":"integer","title":"Year"},"meter_id":{"type":"integer","title":"Meter Id"},"total_energy":{"type":"number","title":"Total Energy"}},"type":"object","required":["day","month","year","meter_id","total_energy"],"title":"MonthlyEnergyRead"},"ProposalsResponse":{"properties":{"m3ter_no":{"type":"integer","title":"M3Ter No"},"account":{"type":"string","title":"Account"},"nonce":{"type":"integer","title":"Nonce"}},"type":"object","required":["m3ter_no","account","nonce"],"title":"ProposalsResponse","description":"Represents the structured response containing a meter number,\na formatted account ID, and a nonce value."},"ValidationError":{"properties":{"loc":{"items":{"anyOf":[{"type":"string"},{"type":"integer"}]},"type":"array","title":"Location"},"msg":{"type":"string","title":"Message"},"type":{"type":"string","title":"Error Type"},"input":{"title":"Input"},"ctx":{"type":"object","title":"Context"}},"type":"object","required":["loc","msg","type"],"title":"ValidationError"},"WeeklyResponse":{"properties":{"day_of_week":{"type":"integer","title":"Day Of Week"},"total_energy":{"type":"number","title":"Total Energy"}},"type":"object","required":["day_of_week","total_energy"],"title":"WeeklyResponse","description":"Response model for weekly enpoint."},"WeeksEnergyRead":{"properties":{"year":{"type":"integer","title":"Year"},"week":{"type":"integer","title":"Week"},"meter_id":{"type":"integer","title":"Meter Id"},"total_energy":{"type":"number","title":"Total Energy"}},"type":"object","required":["year","week","meter_id","total_energy"],"title":"WeeksEnergyRead"}}}}
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "M3terstate Indexer API",
+    "version": "1.0.0",
+    "description": "REST access to a single configured chain/contract/topic stream indexed from Etherscan V2. No live proxy. Reorg recovery and replay may replace recently indexed data; consult /v1/status. Pagination is deterministic per query, not a snapshot across requests."
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Indexer"
+    },
+    {
+      "name": "Operations"
+    }
+  ],
+  "paths": {
+    "/live": {
+      "get": {
+        "operationId": "getLiveness",
+        "summary": "Process liveness",
+        "description": "",
+        "tags": [
+          "Operations"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query or path parameter",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No indexed record",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Indexer not ready",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Database query timeout",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ready": {
+      "get": {
+        "operationId": "getReadiness",
+        "summary": "Database and indexing freshness readiness",
+        "description": "503 until a successful poll; also 503 on last poll failure or a successful poll older than max(3*POLL_INTERVAL,1h).",
+        "tags": [
+          "Operations"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query or path parameter",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No indexed record",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Indexer not ready",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Database query timeout",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/status": {
+      "get": {
+        "operationId": "getIndexerStatus",
+        "summary": "Durable stream progress",
+        "description": "",
+        "tags": [
+          "Operations"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Status"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query or path parameter",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No indexed record",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Indexer not ready",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Database query timeout",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/events": {
+      "get": {
+        "operationId": "listEvents",
+        "summary": "List indexed events with decoded meter state",
+        "description": "Results come exclusively from PostgreSQL. Blocks and numeric quantities are decimal strings. Stable ordering uses block number then block-wide log index. No API key, module, or action parameters are accepted. Each event includes words[].meters[] with meterId, cumulative accountWh, and nonce, matching the single-event endpoint. Accounts are whole watt-hours, not milliwatt-hours.",
+        "tags": [
+          "Indexer"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/fromBlock"
+          },
+          {
+            "$ref": "#/components/parameters/toBlock"
+          },
+          {
+            "$ref": "#/components/parameters/chainid"
+          },
+          {
+            "$ref": "#/components/parameters/address"
+          },
+          {
+            "$ref": "#/components/parameters/topic0"
+          },
+          {
+            "$ref": "#/components/parameters/topic1"
+          },
+          {
+            "$ref": "#/components/parameters/topic2"
+          },
+          {
+            "$ref": "#/components/parameters/topic3"
+          },
+          {
+            "$ref": "#/components/parameters/topic0_1_opr"
+          },
+          {
+            "$ref": "#/components/parameters/topic0_2_opr"
+          },
+          {
+            "$ref": "#/components/parameters/topic0_3_opr"
+          },
+          {
+            "$ref": "#/components/parameters/topic1_2_opr"
+          },
+          {
+            "$ref": "#/components/parameters/topic1_3_opr"
+          },
+          {
+            "$ref": "#/components/parameters/topic2_3_opr"
+          },
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/offset"
+          },
+          {
+            "$ref": "#/components/parameters/sort"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query or path parameter",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No indexed record",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Indexer not ready",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Database query timeout",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/events/{transactionHash}/{logIndex}": {
+      "get": {
+        "operationId": "getEvent",
+        "summary": "Get a commit and its decoded word replacements",
+        "description": "",
+        "tags": [
+          "Indexer"
+        ],
+        "parameters": [
+          {
+            "name": "transactionHash",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^0x[0-9a-fA-F]{64}$"
+            },
+            "description": "Transaction hash"
+          },
+          {
+            "name": "logIndex",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^([0-9]+|0x[0-9a-fA-F]+)$"
+            },
+            "description": "Block-wide log index"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query or path parameter",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No indexed record",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Indexer not ready",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Database query timeout",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/meters": {
+      "get": {
+        "operationId": "listMeters",
+        "summary": "List materialized current meters",
+        "description": "Filters apply to the event that last replaced the current meter. toBlock does not reconstruct historical state. All four lanes of changed words are materialized, including zero lanes.",
+        "tags": [
+          "Indexer"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/fromBlock"
+          },
+          {
+            "$ref": "#/components/parameters/toBlock"
+          },
+          {
+            "$ref": "#/components/parameters/chainid"
+          },
+          {
+            "$ref": "#/components/parameters/address"
+          },
+          {
+            "$ref": "#/components/parameters/topic0"
+          },
+          {
+            "$ref": "#/components/parameters/topic1"
+          },
+          {
+            "$ref": "#/components/parameters/topic2"
+          },
+          {
+            "$ref": "#/components/parameters/topic3"
+          },
+          {
+            "$ref": "#/components/parameters/topic0_1_opr"
+          },
+          {
+            "$ref": "#/components/parameters/topic0_2_opr"
+          },
+          {
+            "$ref": "#/components/parameters/topic0_3_opr"
+          },
+          {
+            "$ref": "#/components/parameters/topic1_2_opr"
+          },
+          {
+            "$ref": "#/components/parameters/topic1_3_opr"
+          },
+          {
+            "$ref": "#/components/parameters/topic2_3_opr"
+          },
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/offset"
+          },
+          {
+            "$ref": "#/components/parameters/sort"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeterPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query or path parameter",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No indexed record",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Indexer not ready",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Database query timeout",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/meters/{meterId}": {
+      "get": {
+        "operationId": "getMeter",
+        "summary": "Get a materialized current meter",
+        "description": "404 means no indexed word replacement exists for this meter; after a complete replay of a fresh deployment its implicit state is zero.",
+        "tags": [
+          "Indexer"
+        ],
+        "parameters": [
+          {
+            "name": "meterId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^([0-9]+|0x[0-9a-fA-F]+)$"
+            },
+            "description": "Meter ID, 0 through 17179869183"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentMeter"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query or path parameter",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No indexed record",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Indexer not ready",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Database query timeout",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/meters/{meterId}/history": {
+      "get": {
+        "operationId": "listMeterHistory",
+        "summary": "List meter snapshots at word replacements",
+        "description": "Includes unchanged lanes when another lane in the same word changed. Does not expose individual signed actions.",
+        "tags": [
+          "Indexer"
+        ],
+        "parameters": [
+          {
+            "name": "meterId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^([0-9]+|0x[0-9a-fA-F]+)$"
+            },
+            "description": "Meter ID, 0 through 17179869183"
+          },
+          {
+            "$ref": "#/components/parameters/fromBlock"
+          },
+          {
+            "$ref": "#/components/parameters/toBlock"
+          },
+          {
+            "$ref": "#/components/parameters/chainid"
+          },
+          {
+            "$ref": "#/components/parameters/address"
+          },
+          {
+            "$ref": "#/components/parameters/topic0"
+          },
+          {
+            "$ref": "#/components/parameters/topic1"
+          },
+          {
+            "$ref": "#/components/parameters/topic2"
+          },
+          {
+            "$ref": "#/components/parameters/topic3"
+          },
+          {
+            "$ref": "#/components/parameters/topic0_1_opr"
+          },
+          {
+            "$ref": "#/components/parameters/topic0_2_opr"
+          },
+          {
+            "$ref": "#/components/parameters/topic0_3_opr"
+          },
+          {
+            "$ref": "#/components/parameters/topic1_2_opr"
+          },
+          {
+            "$ref": "#/components/parameters/topic1_3_opr"
+          },
+          {
+            "$ref": "#/components/parameters/topic2_3_opr"
+          },
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/offset"
+          },
+          {
+            "$ref": "#/components/parameters/sort"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeterPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query or path parameter",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No indexed record",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Indexer not ready",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Database query timeout",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/words/{slot}": {
+      "get": {
+        "operationId": "getWord",
+        "summary": "Get a materialized current packed word",
+        "description": "",
+        "tags": [
+          "Indexer"
+        ],
+        "parameters": [
+          {
+            "name": "slot",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^([0-9]+|0x[0-9a-fA-F]+)$"
+            },
+            "description": "Slot ID, 0 through 4294967295"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentWord"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query or path parameter",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No indexed record",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Indexer not ready",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Database query timeout",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Meter": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "meterId": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Meter ID, 0 through 17179869183."
+          },
+          "accountWh": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Cumulative whole watt-hours, maximum 1099511627775."
+          },
+          "nonce": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Last accepted nonce, maximum 16777215."
+          }
+        },
+        "required": [
+          "meterId",
+          "accountWh",
+          "nonce"
+        ]
+      },
+      "Word": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "slot": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Unsigned decimal integer encoded as a string."
+          },
+          "word": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Unsigned decimal integer encoded as a string."
+          },
+          "meters": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": {
+              "$ref": "#/components/schemas/Meter"
+            }
+          }
+        },
+        "required": [
+          "slot",
+          "word",
+          "meters"
+        ]
+      },
+      "Event": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "chainId": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Unsigned decimal integer encoded as a string."
+          },
+          "address": {
+            "type": "string",
+            "pattern": "^0x[0-9a-f]{40}$"
+          },
+          "topics": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 1,
+            "items": {
+              "type": "string",
+              "pattern": "^0x[0-9a-f]{64}$"
+            }
+          },
+          "data": {
+            "type": "string",
+            "pattern": "^0x([0-9a-fA-F]{2})*$",
+            "description": "Full ABI-encoded event data."
+          },
+          "updates": {
+            "type": "string",
+            "pattern": "^0x([0-9a-fA-F]{2})*$",
+            "description": "Unwrapped concatenated 36-byte replacements."
+          },
+          "blockNumber": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Unsigned decimal integer encoded as a string."
+          },
+          "blockHash": {
+            "type": "string",
+            "pattern": "^0x[0-9a-f]{64}$"
+          },
+          "timestamp": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Block Unix timestamp in seconds."
+          },
+          "transactionHash": {
+            "type": "string",
+            "pattern": "^0x[0-9a-f]{64}$"
+          },
+          "transactionIndex": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Unsigned decimal integer encoded as a string."
+          },
+          "logIndex": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Unsigned decimal integer encoded as a string."
+          },
+          "words": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/Word"
+            },
+            "description": "Sparse replacement words with all four decoded meter lanes, including unchanged and zero lanes."
+          }
+        },
+        "required": [
+          "chainId",
+          "address",
+          "topics",
+          "data",
+          "updates",
+          "blockNumber",
+          "blockHash",
+          "timestamp",
+          "transactionHash",
+          "transactionIndex",
+          "logIndex",
+          "words"
+        ]
+      },
+      "EventDetail": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "chainId": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Unsigned decimal integer encoded as a string."
+          },
+          "address": {
+            "type": "string",
+            "pattern": "^0x[0-9a-f]{40}$"
+          },
+          "topics": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 1,
+            "items": {
+              "type": "string",
+              "pattern": "^0x[0-9a-f]{64}$"
+            }
+          },
+          "data": {
+            "type": "string",
+            "pattern": "^0x([0-9a-fA-F]{2})*$",
+            "description": "Full ABI-encoded event data."
+          },
+          "updates": {
+            "type": "string",
+            "pattern": "^0x([0-9a-fA-F]{2})*$",
+            "description": "Unwrapped concatenated 36-byte replacements."
+          },
+          "blockNumber": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Unsigned decimal integer encoded as a string."
+          },
+          "blockHash": {
+            "type": "string",
+            "pattern": "^0x[0-9a-f]{64}$"
+          },
+          "timestamp": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Block Unix timestamp in seconds."
+          },
+          "transactionHash": {
+            "type": "string",
+            "pattern": "^0x[0-9a-f]{64}$"
+          },
+          "transactionIndex": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Unsigned decimal integer encoded as a string."
+          },
+          "logIndex": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Unsigned decimal integer encoded as a string."
+          },
+          "words": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/Word"
+            },
+            "description": "Sparse replacement words with all four decoded meter lanes, including unchanged and zero lanes."
+          }
+        },
+        "required": [
+          "chainId",
+          "address",
+          "topics",
+          "data",
+          "updates",
+          "blockNumber",
+          "blockHash",
+          "timestamp",
+          "transactionHash",
+          "transactionIndex",
+          "logIndex",
+          "words"
+        ]
+      },
+      "CurrentMeter": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "meterId": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Meter ID, 0 through 17179869183."
+          },
+          "accountWh": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Cumulative whole watt-hours, maximum 1099511627775."
+          },
+          "nonce": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Last accepted nonce, maximum 16777215."
+          },
+          "blockNumber": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Unsigned decimal integer encoded as a string."
+          },
+          "transactionHash": {
+            "type": "string",
+            "pattern": "^0x[0-9a-f]{64}$"
+          },
+          "logIndex": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Unsigned decimal integer encoded as a string."
+          }
+        },
+        "required": [
+          "meterId",
+          "accountWh",
+          "nonce",
+          "blockNumber",
+          "transactionHash",
+          "logIndex"
+        ]
+      },
+      "CurrentWord": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "slot": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Unsigned decimal integer encoded as a string."
+          },
+          "word": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Unsigned decimal integer encoded as a string."
+          },
+          "blockNumber": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Unsigned decimal integer encoded as a string."
+          },
+          "transactionHash": {
+            "type": "string",
+            "pattern": "^0x[0-9a-f]{64}$"
+          },
+          "logIndex": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Unsigned decimal integer encoded as a string."
+          }
+        },
+        "required": [
+          "slot",
+          "word",
+          "blockNumber",
+          "transactionHash",
+          "logIndex"
+        ]
+      },
+      "Status": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "chainId": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Unsigned decimal integer encoded as a string."
+          },
+          "address": {
+            "type": "string",
+            "pattern": "^0x[0-9a-f]{40}$"
+          },
+          "topic0": {
+            "type": "string",
+            "pattern": "^0x[0-9a-f]{64}$"
+          },
+          "fromBlock": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Unsigned decimal integer encoded as a string."
+          },
+          "nextBlock": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Unsigned decimal integer encoded as a string."
+          },
+          "scannedThrough": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Unsigned decimal integer encoded as a string.",
+            "nullable": true
+          },
+          "lastBlockHash": {
+            "type": "string",
+            "pattern": "^0x[0-9a-f]{64}$",
+            "nullable": true
+          },
+          "observedHead": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "description": "Unsigned decimal integer encoded as a string.",
+            "nullable": true
+          },
+          "lastSuccessfulPoll": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lastError": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "chainId",
+          "address",
+          "topic0",
+          "fromBlock",
+          "nextBlock",
+          "scannedThrough",
+          "lastBlockHash",
+          "observedHead",
+          "lastSuccessfulPoll",
+          "lastError",
+          "updatedAt"
+        ]
+      },
+      "Problem": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "detail",
+          "requestId"
+        ]
+      },
+      "Health": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "ready"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "EventPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Event"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "hasMore": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data",
+          "page",
+          "offset",
+          "hasMore"
+        ]
+      },
+      "MeterPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CurrentMeter"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "hasMore": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data",
+          "page",
+          "offset",
+          "hasMore"
+        ]
+      }
+    },
+    "parameters": {
+      "fromBlock": {
+        "name": "fromBlock",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "pattern": "^([0-9]+|0x[0-9a-fA-F]+)$"
+        },
+        "description": "Inclusive lower block bound; decimal or hex."
+      },
+      "toBlock": {
+        "name": "toBlock",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "pattern": "^([0-9]+|0x[0-9a-fA-F]+|latest)$"
+        },
+        "description": "Inclusive upper block bound. latest means the database scanned-through watermark, not the live chain head."
+      },
+      "chainid": {
+        "name": "chainid",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "pattern": "^([0-9]+|0x[0-9a-fA-F]+)$"
+        },
+        "description": "Filter within the configured chain. A different chain returns an empty list."
+      },
+      "address": {
+        "name": "address",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "pattern": "^0x[0-9a-fA-F]{40}$"
+        },
+        "description": "Case-insensitive emitting address within the indexed stream."
+      },
+      "topic0": {
+        "name": "topic0",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "pattern": "^0x[0-9a-fA-F]{64}$"
+        },
+        "description": "Exact positional topic 0; StateCommitted has no topics 1-3."
+      },
+      "topic1": {
+        "name": "topic1",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "pattern": "^0x[0-9a-fA-F]{64}$"
+        },
+        "description": "Exact positional topic 1; StateCommitted has no topics 1-3."
+      },
+      "topic2": {
+        "name": "topic2",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "pattern": "^0x[0-9a-fA-F]{64}$"
+        },
+        "description": "Exact positional topic 2; StateCommitted has no topics 1-3."
+      },
+      "topic3": {
+        "name": "topic3",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "pattern": "^0x[0-9a-fA-F]{64}$"
+        },
+        "description": "Exact positional topic 3; StateCommitted has no topics 1-3."
+      },
+      "topic0_1_opr": {
+        "name": "topic0_1_opr",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "and",
+            "or"
+          ]
+        },
+        "description": "Combine topic0 and topic1; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed."
+      },
+      "topic0_2_opr": {
+        "name": "topic0_2_opr",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "and",
+            "or"
+          ]
+        },
+        "description": "Combine topic0 and topic2; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed."
+      },
+      "topic0_3_opr": {
+        "name": "topic0_3_opr",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "and",
+            "or"
+          ]
+        },
+        "description": "Combine topic0 and topic3; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed."
+      },
+      "topic1_2_opr": {
+        "name": "topic1_2_opr",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "and",
+            "or"
+          ]
+        },
+        "description": "Combine topic1 and topic2; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed."
+      },
+      "topic1_3_opr": {
+        "name": "topic1_3_opr",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "and",
+            "or"
+          ]
+        },
+        "description": "Combine topic1 and topic3; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed."
+      },
+      "topic2_3_opr": {
+        "name": "topic2_3_opr",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "and",
+            "or"
+          ]
+        },
+        "description": "Combine topic2 and topic3; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed."
+      },
+      "page": {
+        "name": "page",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000,
+          "default": 1
+        },
+        "description": "One-based page; (page-1)*offset may not exceed 1000000. Use narrower block ranges for deep history."
+      },
+      "offset": {
+        "name": "offset",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "default": 100
+        },
+        "description": "Records per page; not a SQL row offset."
+      },
+      "sort": {
+        "name": "sort",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "asc",
+            "desc"
+          ],
+          "default": "asc"
+        },
+        "description": "Extension: event execution order, or meter ID order for current-meter lists."
+      }
+    }
+  }
+}

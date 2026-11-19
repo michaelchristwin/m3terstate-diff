@@ -1,77 +1,69 @@
 # m3ters / Diff
 
-A Vite + React state comparison workbench using TanStack Router, TanStack Query, Hey API, and Bun. It loads the two latest proposals from m3terscan, converts their meter records to CSV with `json-2-csv`, and automatically highlights differing records side by side.
+A React + Vite workbench showing only the meter changes between adjacent indexed commits. History comes from the REST API at https://ponder.m3ter.ing; the app no longer uses Ponder SQL/GraphQL or m3terscan snapshots.
 
 ## Run
 
-Requires Bun 1.4+ and Node.js 22.12+ for the Vite/tooling executables.
+Requires Node.js 22.12+ (or a supported newer release), pnpm 10+, and Bun for unit tests.
 
 ```sh
-bun install
-bun run dev
+pnpm install --frozen-lockfile
+pnpm dev
 ```
 
-Open http://localhost:3000 (use `localhost`, not `127.0.0.1`: the API allows localhost ports 3000 and 5173 through CORS). Both development and preview default to port 3000. The TanStack scaffold was created with:
+Open http://localhost:3000. Development and preview both use port 3000. The API must allow the deployed site's origin through CORS.
+
+## REST integration
+
+The checked-in `openapi.json` was downloaded from https://ponder.m3ter.ing/openapi.json. `src/client` is generated from this local schema with Hey API. Development and builds work without contacting the schema endpoint. To update it deliberately:
 
 ```sh
-bunx @tanstack/cli create m3ters-diff --router-only --add-ons tanstack-query
-bun add @hey-api/vite-plugin -D
+curl -fLsS https://ponder.m3ter.ing/openapi.json -o openapi.json
+pnpm generate-client
 ```
 
-The current CLI ignores add-ons in router-only mode, so TanStack Query was installed and wired manually. The app lives in `m3ters-diff/`; run the commands from that directory.
+The workbench uses:
 
-## State workflow
+- `GET /v1/status` to bound history to the indexed `fromBlock` and `scannedThrough` watermark.
+- `GET /v1/events?fromBlock=…&toBlock=…&sort=asc&page=…&offset=1000` to read ordered commit events, including their decoded `words[].meters[]`.
+- A second status read to detect an indexer change during loading. Inconsistent history, malformed responses, and API problem details are surfaced with Retry. No comparison is presented as successful when loading fails.
 
-- GET `/recent-blocks` supplies history in API order (oldest first). The last two entries are selected initially.
-- `queries.getProposals(txHash)` uses the generated SDK and returns a CSV string. It validates the response and fixes the columns to `m3ter_no,account,nonce`, retaining API record order.
-- **Compare previous state** moves both selections one position backward. It is disabled while loading or at the oldest pair. **Back to latest** resets the selection.
-- Queries share cached proposal responses by transaction hash. Errors throw and show a retry button; missing hashes never trigger requests.
-- **Refresh history** explicitly POSTs `/recent-blocks` via a mutation, then invalidates the history GET query and resets to the latest pair. The API may process its refresh asynchronously; a subsequent refresh may be necessary if its returned history has not updated yet.
-- The viewer has a shared meter column, separated state columns, 100-record pagination, and full JSON export. Hover anywhere on a changed row, or focus it with the keyboard, to see transaction (nonce) and energy (account, in kWh) differences on two lines. Both use newer minus previous. Other rows have no tooltip; Escape dismisses it.
-- **Differences only** persists in localStorage (and still works if storage is unavailable). When unchecked, the sticky **Previous difference / Next difference** controls scroll through differences across pages.
-- Visible cards show Changed, Added, Total Transactions, and Total kWh. Totals sum signed deltas across all changed records, independent of pagination and filtering, using decimal arithmetic. Added/removed records are excluded from totals. Invalid numeric values make the affected total unavailable. Exported row statuses and counts are retained.
-- Transaction hashes link to Etherscan in a new tab, with an external-link icon.
+Pagination follows `hasMore`. At a page boundary, the loader advances the inclusive lower block bound and deduplicates already loaded logs; multiple pages within one block remain supported. This avoids the API's deep page-offset limit. TanStack Query caches the loaded history, so navigating between adjacent states makes no extra requests. **Refresh history** performs fresh GET requests and returns to the latest pair.
 
-## API generation
+The API does not promise a transactionally consistent snapshot across requests. The bounded scan, overlap checks, and status checks detect observable changes, but cannot guarantee consistency against an undetectable concurrent rewrite. Retry after indexing settles if history changes during loading.
 
-`openapi-ts.config.ts` uses the requested live schema:
+## Diff behavior
 
-```ts
-import { defineConfig } from '@hey-api/openapi-ts'
+Events are sparse word replacements, not complete snapshots. The app replays them in `(blockNumber, logIndex)` order and remembers the last value of each meter by `meterId`. Meters absent from an event retain their prior values. All four lanes are applied, including zero values; unchanged lanes never appear in the diff. If a word repeats within one commit, the last replacement wins.
 
-export default defineConfig({
-  input: 'https://m3terscan-api.onrender.com/openapi.json',
-  output: 'src/client',
-})
-```
+The initial baseline is zero for meters with no earlier replacement in the configured indexed stream. Accurate historical values therefore depend on the indexer's `fromBlock` covering the contract's initial history. Current-meter endpoints are not used to reconstruct historical states.
 
-The Hey API Vite plugin generates the client on development startup and build. Run `bun run generate-client` to regenerate it separately. Generated code in `src/client` should not be edited by hand. Generation requires network access and an available schema endpoint. Browser requests require the API to allow the site's origin through CORS.
+- The latest two commits are selected initially. **Compare previous state** walks backward through adjacent pairs; **Back to latest** resets the selection. At least two indexed commits are required.
+- The table and JSON download contain only changed meters. There is no full-snapshot toggle or persisted filter setting. Matching states have an explicit empty result.
+- Values from `accountWh` are converted from whole watt-hours to kWh with decimal arithmetic. Nonces remain decimal strings.
+- Changed meters are sorted by numeric meter ID and paginated in groups of 100. Totals include every change, including first updates from zero, independent of the current table page.
+- Hover or focus a changed row to see transaction and energy deltas, calculated as newer minus previous. Escape dismisses the tooltip.
+- The API describes a fixed meter address space, so zero-to-value and value-to-zero transitions are changes, not additions or removals. The visible cards are Changed, Total Transactions, and Total kWh.
+- Commit cards identify the block, log index, and chain. Transaction links use Ethereum or Sepolia Etherscan according to `chainId`; other chains show the hash without an assumed explorer URL. The API does not return the transaction sender.
 
-## Reusable comparison module
+JSON retains `rows`, `differentIndices`, and `counts`. For REST diffs, `index` and `differentIndices` are **meter IDs**, not CSV line numbers. Each row's `left` and `right` are `[meterId, accountKWh, nonce]`. Only `changed` rows are exported; the other count fields remain zero for compatibility with the shared result type.
 
-`src/diff.ts` is independent of React and the DOM and works in frontend/backend TypeScript with Papa Parse installed:
+## Reusable CSV comparison module
 
-```ts
-import { compareInputs } from './src/diff'
+`src/diff.ts` remains independent of React and the REST integration. It accepts CSV or text and compares records by position. Its indices are still zero-based record positions (including CSV headers). It is built into `dist/lib/` with declarations and requires Papa Parse when consumed separately. The app's REST comparisons use identity-based replay in `src/event-history.ts` instead.
 
-const result = compareInputs('id,name\n1,Ada', 'id,name\n1,Grace\n2,Lin')
-console.log(result.differentIndices) // [1, 2]
-// result.rows: { index, status, left, right }[]
-// result.counts: { equal, changed, added, removed }
-```
-
-Records compare by position, not meter identity or sequence alignment. Headers count at index 0 in exports. The viewer shows only meter records, with a shared `m3ter_no` column; mismatched meter numbers appear as previous → newer. Middle insertions shift subsequent comparisons. CSV fields are decoded before equality checks. BOM and line endings are normalized, a final newline does not add a record, and blank records are retained. Text mode and optional trimming remain available in the module.
-
-## Checks and deployment
+## Validation and output
 
 ```sh
-bun run test
-bun run typecheck
-bunx playwright install chromium
-bun run test:e2e
-bun run build
+pnpm test
+pnpm typecheck
+pnpm exec playwright install chromium
+pnpm test:e2e
+pnpm build
 ```
 
-Unit tests cover comparison rules, CSV conversion and invalid payloads. Browser tests mock API requests to verify navigation, cache reuse, loading, errors/retry, history boundaries, refresh, and export without modifying the live API.
+Unit tests cover sparse replay, exact units, zero lanes, order and identity, REST pagination, cancellation, consistency checks, and malformed/error responses, alongside the reusable CSV and delta modules. Browser tests mock the REST endpoints and cover navigation, caching, refresh, loading, retry, matching states, diff-only exports, pagination, tooltips, and mobile layout.
 
-Build output is a static site in `dist/` plus reusable JavaScript/types in `dist/lib/`. Deploy `dist/` to a static host. Browser comparison is synchronous and keeps the parsed proposals in memory; pagination limits DOM size, not parsing memory.
+`dist/` is a static production build ready for a static host. `dist/lib/` contains the reusable comparison module. History is replayed in browser memory; table pagination limits rendered rows, not history download or replay memory.
+
+The delivery ZIP includes the source, generated client, local OpenAPI schema, lockfile, tests, and `dist/`. It excludes `node_modules`, Git metadata, caches, test artifacts, and local environment files.

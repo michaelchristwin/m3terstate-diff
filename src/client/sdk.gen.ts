@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { ExecuteRecentBlocksRecentBlocksPostData, ExecuteRecentBlocksRecentBlocksPostResponses, GetActivitiesMeterMeterIdActivitiesGetData, GetActivitiesMeterMeterIdActivitiesGetErrors, GetActivitiesMeterMeterIdActivitiesGetResponses, GetDailyBatchDailyBatchGetData, GetDailyBatchDailyBatchGetErrors, GetDailyBatchDailyBatchGetResponses, GetDailyMeterMeterIdDailyGetData, GetDailyMeterMeterIdDailyGetErrors, GetDailyMeterMeterIdDailyGetResponses, GetMonthOfYearMeterMeterIdMonthMonthYearGetData, GetMonthOfYearMeterMeterIdMonthMonthYearGetErrors, GetMonthOfYearMeterMeterIdMonthMonthYearGetResponses, GetProposalProposalTxHashGetData, GetProposalProposalTxHashGetErrors, GetProposalProposalTxHashGetResponses, GetRecentBlocksRecentBlocksGetData, GetRecentBlocksRecentBlocksGetResponses, GetWeeklyMeterMeterIdWeeklyGetData, GetWeeklyMeterMeterIdWeeklyGetErrors, GetWeeklyMeterMeterIdWeeklyGetResponses, GetWeeksOfYearMeterMeterIdWeeksYearGetData, GetWeeksOfYearMeterMeterIdWeeksYearGetErrors, GetWeeksOfYearMeterMeterIdWeeksYearGetResponses, GetWorldStateWorldStateGetData, GetWorldStateWorldStateGetResponses, ReadRootGetData, ReadRootGetResponses } from './types.gen';
+import type { GetEventData, GetEventErrors, GetEventResponses, GetIndexerStatusData, GetIndexerStatusErrors, GetIndexerStatusResponses, GetLivenessData, GetLivenessErrors, GetLivenessResponses, GetMeterData, GetMeterErrors, GetMeterResponses, GetReadinessData, GetReadinessErrors, GetReadinessResponses, GetWordData, GetWordErrors, GetWordResponses, ListEventsData, ListEventsErrors, ListEventsResponses, ListMeterHistoryData, ListMeterHistoryErrors, ListMeterHistoryResponses, ListMetersData, ListMetersErrors, ListMetersResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -19,88 +19,56 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 };
 
 /**
- * Read Root
- *
- * Welcome message to our users.
+ * Process liveness
  */
-export const readRootGet = <ThrowOnError extends boolean = false>(options?: Options<ReadRootGetData, ThrowOnError>): RequestResult<ReadRootGetResponses, unknown, ThrowOnError> => (options?.client ?? client).get<ReadRootGetResponses, unknown, ThrowOnError>({ url: '/', ...options });
+export const getLiveness = <ThrowOnError extends boolean = false>(options?: Options<GetLivenessData, ThrowOnError>): RequestResult<GetLivenessResponses, GetLivenessErrors, ThrowOnError> => (options?.client ?? client).get<GetLivenessResponses, GetLivenessErrors, ThrowOnError>({ url: '/live', ...options });
 
 /**
- * Get Recent Blocks
+ * Database and indexing freshness readiness
  *
- * Get latest blocks
+ * 503 until a successful poll; also 503 on last poll failure or a successful poll older than max(3*POLL_INTERVAL,1h).
  */
-export const getRecentBlocksRecentBlocksGet = <ThrowOnError extends boolean = false>(options?: Options<GetRecentBlocksRecentBlocksGetData, ThrowOnError>): RequestResult<GetRecentBlocksRecentBlocksGetResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetRecentBlocksRecentBlocksGetResponses, unknown, ThrowOnError>({ url: '/recent-blocks', ...options });
+export const getReadiness = <ThrowOnError extends boolean = false>(options?: Options<GetReadinessData, ThrowOnError>): RequestResult<GetReadinessResponses, GetReadinessErrors, ThrowOnError> => (options?.client ?? client).get<GetReadinessResponses, GetReadinessErrors, ThrowOnError>({ url: '/ready', ...options });
 
 /**
- * Execute Recent Blocks
- *
- * Execute query for recent blocks on dune
+ * Durable stream progress
  */
-export const executeRecentBlocksRecentBlocksPost = <ThrowOnError extends boolean = false>(options?: Options<ExecuteRecentBlocksRecentBlocksPostData, ThrowOnError>): RequestResult<ExecuteRecentBlocksRecentBlocksPostResponses, unknown, ThrowOnError> => (options?.client ?? client).post<ExecuteRecentBlocksRecentBlocksPostResponses, unknown, ThrowOnError>({ url: '/recent-blocks', ...options });
+export const getIndexerStatus = <ThrowOnError extends boolean = false>(options?: Options<GetIndexerStatusData, ThrowOnError>): RequestResult<GetIndexerStatusResponses, GetIndexerStatusErrors, ThrowOnError> => (options?.client ?? client).get<GetIndexerStatusResponses, GetIndexerStatusErrors, ThrowOnError>({ url: '/v1/status', ...options });
 
 /**
- * Get World State
+ * List indexed events with decoded meter state
  *
- * Lorem ipsum
+ * Results come exclusively from PostgreSQL. Blocks and numeric quantities are decimal strings. Stable ordering uses block number then block-wide log index. No API key, module, or action parameters are accepted. Each event includes words[].meters[] with meterId, cumulative accountWh, and nonce, matching the single-event endpoint. Accounts are whole watt-hours, not milliwatt-hours.
  */
-export const getWorldStateWorldStateGet = <ThrowOnError extends boolean = false>(options?: Options<GetWorldStateWorldStateGetData, ThrowOnError>): RequestResult<GetWorldStateWorldStateGetResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetWorldStateWorldStateGetResponses, unknown, ThrowOnError>({ url: '/world-state', ...options });
+export const listEvents = <ThrowOnError extends boolean = false>(options?: Options<ListEventsData, ThrowOnError>): RequestResult<ListEventsResponses, ListEventsErrors, ThrowOnError> => (options?.client ?? client).get<ListEventsResponses, ListEventsErrors, ThrowOnError>({ url: '/v1/events', ...options });
 
 /**
- * Get Daily Batch
- *
- * Get daily Batch
+ * Get a commit and its decoded word replacements
  */
-export const getDailyBatchDailyBatchGet = <ThrowOnError extends boolean = false>(options: Options<GetDailyBatchDailyBatchGetData, ThrowOnError>): RequestResult<GetDailyBatchDailyBatchGetResponses, GetDailyBatchDailyBatchGetErrors, ThrowOnError> => (options.client ?? client).get<GetDailyBatchDailyBatchGetResponses, GetDailyBatchDailyBatchGetErrors, ThrowOnError>({ url: '/daily-batch', ...options });
+export const getEvent = <ThrowOnError extends boolean = false>(options: Options<GetEventData, ThrowOnError>): RequestResult<GetEventResponses, GetEventErrors, ThrowOnError> => (options.client ?? client).get<GetEventResponses, GetEventErrors, ThrowOnError>({ url: '/v1/events/{transactionHash}/{logIndex}', ...options });
 
 /**
- * Get Daily
+ * List materialized current meters
  *
- * Get daily energy usage aggregate.
+ * Filters apply to the event that last replaced the current meter. toBlock does not reconstruct historical state. All four lanes of changed words are materialized, including zero lanes.
  */
-export const getDailyMeterMeterIdDailyGet = <ThrowOnError extends boolean = false>(options: Options<GetDailyMeterMeterIdDailyGetData, ThrowOnError>): RequestResult<GetDailyMeterMeterIdDailyGetResponses, GetDailyMeterMeterIdDailyGetErrors, ThrowOnError> => (options.client ?? client).get<GetDailyMeterMeterIdDailyGetResponses, GetDailyMeterMeterIdDailyGetErrors, ThrowOnError>({ url: '/meter/{meter_id}/daily', ...options });
+export const listMeters = <ThrowOnError extends boolean = false>(options?: Options<ListMetersData, ThrowOnError>): RequestResult<ListMetersResponses, ListMetersErrors, ThrowOnError> => (options?.client ?? client).get<ListMetersResponses, ListMetersErrors, ThrowOnError>({ url: '/v1/meters', ...options });
 
 /**
- * Get Weekly
+ * Get a materialized current meter
  *
- * Get weekly energy usage aggregate.
+ * 404 means no indexed word replacement exists for this meter; after a complete replay of a fresh deployment its implicit state is zero.
  */
-export const getWeeklyMeterMeterIdWeeklyGet = <ThrowOnError extends boolean = false>(options: Options<GetWeeklyMeterMeterIdWeeklyGetData, ThrowOnError>): RequestResult<GetWeeklyMeterMeterIdWeeklyGetResponses, GetWeeklyMeterMeterIdWeeklyGetErrors, ThrowOnError> => (options.client ?? client).get<GetWeeklyMeterMeterIdWeeklyGetResponses, GetWeeklyMeterMeterIdWeeklyGetErrors, ThrowOnError>({ url: '/meter/{meter_id}/weekly', ...options });
+export const getMeter = <ThrowOnError extends boolean = false>(options: Options<GetMeterData, ThrowOnError>): RequestResult<GetMeterResponses, GetMeterErrors, ThrowOnError> => (options.client ?? client).get<GetMeterResponses, GetMeterErrors, ThrowOnError>({ url: '/v1/meters/{meterId}', ...options });
 
 /**
- * Get Weeks Of Year
+ * List meter snapshots at word replacements
  *
- * Get energy usage of all weeks of specified year.
+ * Includes unchanged lanes when another lane in the same word changed. Does not expose individual signed actions.
  */
-export const getWeeksOfYearMeterMeterIdWeeksYearGet = <ThrowOnError extends boolean = false>(options: Options<GetWeeksOfYearMeterMeterIdWeeksYearGetData, ThrowOnError>): RequestResult<GetWeeksOfYearMeterMeterIdWeeksYearGetResponses, GetWeeksOfYearMeterMeterIdWeeksYearGetErrors, ThrowOnError> => (options.client ?? client).get<GetWeeksOfYearMeterMeterIdWeeksYearGetResponses, GetWeeksOfYearMeterMeterIdWeeksYearGetErrors, ThrowOnError>({ url: '/meter/{meter_id}/weeks/{year}', ...options });
+export const listMeterHistory = <ThrowOnError extends boolean = false>(options: Options<ListMeterHistoryData, ThrowOnError>): RequestResult<ListMeterHistoryResponses, ListMeterHistoryErrors, ThrowOnError> => (options.client ?? client).get<ListMeterHistoryResponses, ListMeterHistoryErrors, ThrowOnError>({ url: '/v1/meters/{meterId}/history', ...options });
 
 /**
- * Get Month Of Year
- *
- * Get daily energy usage for a given month in a specified year.
+ * Get a materialized current packed word
  */
-export const getMonthOfYearMeterMeterIdMonthMonthYearGet = <ThrowOnError extends boolean = false>(options: Options<GetMonthOfYearMeterMeterIdMonthMonthYearGetData, ThrowOnError>): RequestResult<GetMonthOfYearMeterMeterIdMonthMonthYearGetResponses, GetMonthOfYearMeterMeterIdMonthMonthYearGetErrors, ThrowOnError> => (options.client ?? client).get<GetMonthOfYearMeterMeterIdMonthMonthYearGetResponses, GetMonthOfYearMeterMeterIdMonthMonthYearGetErrors, ThrowOnError>({ url: '/meter/{meter_id}/month/{month}/{year}', ...options });
-
-/**
- * Get Activities
- *
- * Get activities of a m3ter
- *
- * :param m3ter_id: Description
- * :type m3ter_id: int
- */
-export const getActivitiesMeterMeterIdActivitiesGet = <ThrowOnError extends boolean = false>(options: Options<GetActivitiesMeterMeterIdActivitiesGetData, ThrowOnError>): RequestResult<GetActivitiesMeterMeterIdActivitiesGetResponses, GetActivitiesMeterMeterIdActivitiesGetErrors, ThrowOnError> => (options.client ?? client).get<GetActivitiesMeterMeterIdActivitiesGetResponses, GetActivitiesMeterMeterIdActivitiesGetErrors, ThrowOnError>({ url: '/meter/{meter_id}/activities', ...options });
-
-/**
- * Get Proposal
- *
- * Retrieve proposal details by transaction hash.
- *
- * First checks the database cache. If not found, fetches from Ethereum
- * blockchain, decodes the transaction data, and caches the results.
- *
- * :param tx_hash: Ethereum transaction hash
- * :type tx_hash: str
- * :return: List of proposal meter readings
- */
-export const getProposalProposalTxHashGet = <ThrowOnError extends boolean = false>(options: Options<GetProposalProposalTxHashGetData, ThrowOnError>): RequestResult<GetProposalProposalTxHashGetResponses, GetProposalProposalTxHashGetErrors, ThrowOnError> => (options.client ?? client).get<GetProposalProposalTxHashGetResponses, GetProposalProposalTxHashGetErrors, ThrowOnError>({ url: '/proposal/{tx_hash}', ...options });
+export const getWord = <ThrowOnError extends boolean = false>(options: Options<GetWordData, ThrowOnError>): RequestResult<GetWordResponses, GetWordErrors, ThrowOnError> => (options.client ?? client).get<GetWordResponses, GetWordErrors, ThrowOnError>({ url: '/v1/words/{slot}', ...options });

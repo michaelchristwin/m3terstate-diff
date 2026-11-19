@@ -4,496 +4,900 @@ export type ClientOptions = {
     baseUrl: `${string}://${string}` | (string & {});
 };
 
-/**
- * Activities
- *
- * Docstring for Activities
- */
-export type Activities = {
+export type Meter = {
     /**
-     * Timestamp
+     * Meter ID, 0 through 17179869183.
      */
-    timestamp: number;
+    meterId: string;
     /**
-     * Energy
+     * Cumulative whole watt-hours, maximum 1099511627775.
      */
-    energy: number;
+    accountWh: string;
     /**
-     * Signature
+     * Last accepted nonce, maximum 16777215.
      */
-    signature: string;
+    nonce: string;
 };
 
-/**
- * ActivitiesResponse
- *
- * Docstring for ActivitiesResponse
- */
-export type ActivitiesResponse = {
+export type Word = {
     /**
-     * Data
+     * Unsigned decimal integer encoded as a string.
      */
-    data: Array<Activities>;
+    slot: string;
     /**
-     * Limit
+     * Unsigned decimal integer encoded as a string.
      */
-    limit: number;
-    /**
-     * Next Cursor
-     */
-    next_cursor: string;
+    word: string;
+    meters: [
+        Meter,
+        Meter,
+        Meter,
+        Meter
+    ];
 };
 
-/**
- * DailyResponse
- *
- * Response model for daily enpoint.
- */
-export type DailyResponse = {
+export type Event = {
     /**
-     * Hour Start Utc
+     * Unsigned decimal integer encoded as a string.
      */
-    hour_start_utc: string;
+    chainId: string;
+    address: string;
+    topics: [
+        string
+    ];
     /**
-     * Total Energy
+     * Full ABI-encoded event data.
      */
-    total_energy: number;
+    data: string;
+    /**
+     * Unwrapped concatenated 36-byte replacements.
+     */
+    updates: string;
+    /**
+     * Unsigned decimal integer encoded as a string.
+     */
+    blockNumber: string;
+    blockHash: string;
+    /**
+     * Block Unix timestamp in seconds.
+     */
+    timestamp: string;
+    transactionHash: string;
+    /**
+     * Unsigned decimal integer encoded as a string.
+     */
+    transactionIndex: string;
+    /**
+     * Unsigned decimal integer encoded as a string.
+     */
+    logIndex: string;
+    /**
+     * Sparse replacement words with all four decoded meter lanes, including unchanged and zero lanes.
+     */
+    words: Array<Word>;
 };
 
-/**
- * HTTPValidationError
- */
-export type HttpValidationError = {
+export type EventDetail = {
     /**
-     * Detail
+     * Unsigned decimal integer encoded as a string.
      */
-    detail?: Array<ValidationError>;
+    chainId: string;
+    address: string;
+    topics: [
+        string
+    ];
+    /**
+     * Full ABI-encoded event data.
+     */
+    data: string;
+    /**
+     * Unwrapped concatenated 36-byte replacements.
+     */
+    updates: string;
+    /**
+     * Unsigned decimal integer encoded as a string.
+     */
+    blockNumber: string;
+    blockHash: string;
+    /**
+     * Block Unix timestamp in seconds.
+     */
+    timestamp: string;
+    transactionHash: string;
+    /**
+     * Unsigned decimal integer encoded as a string.
+     */
+    transactionIndex: string;
+    /**
+     * Unsigned decimal integer encoded as a string.
+     */
+    logIndex: string;
+    /**
+     * Sparse replacement words with all four decoded meter lanes, including unchanged and zero lanes.
+     */
+    words: Array<Word>;
 };
 
-/**
- * MonthlyEnergyRead
- */
-export type MonthlyEnergyRead = {
+export type CurrentMeter = {
     /**
-     * Day
+     * Meter ID, 0 through 17179869183.
      */
-    day: number;
+    meterId: string;
     /**
-     * Month
+     * Cumulative whole watt-hours, maximum 1099511627775.
      */
-    month: number;
+    accountWh: string;
     /**
-     * Year
+     * Last accepted nonce, maximum 16777215.
      */
-    year: number;
+    nonce: string;
     /**
-     * Meter Id
+     * Unsigned decimal integer encoded as a string.
      */
-    meter_id: number;
+    blockNumber: string;
+    transactionHash: string;
     /**
-     * Total Energy
+     * Unsigned decimal integer encoded as a string.
      */
-    total_energy: number;
+    logIndex: string;
 };
 
-/**
- * ProposalsResponse
- *
- * Represents the structured response containing a meter number,
- * a formatted account ID, and a nonce value.
- */
-export type ProposalsResponse = {
+export type CurrentWord = {
     /**
-     * M3Ter No
+     * Unsigned decimal integer encoded as a string.
      */
-    m3ter_no: number;
+    slot: string;
     /**
-     * Account
+     * Unsigned decimal integer encoded as a string.
      */
-    account: string;
+    word: string;
     /**
-     * Nonce
+     * Unsigned decimal integer encoded as a string.
      */
-    nonce: number;
+    blockNumber: string;
+    transactionHash: string;
+    /**
+     * Unsigned decimal integer encoded as a string.
+     */
+    logIndex: string;
 };
 
-/**
- * ValidationError
- */
-export type ValidationError = {
+export type Status = {
     /**
-     * Location
+     * Unsigned decimal integer encoded as a string.
      */
-    loc: Array<string | number>;
+    chainId: string;
+    address: string;
+    topic0: string;
     /**
-     * Message
+     * Unsigned decimal integer encoded as a string.
      */
-    msg: string;
+    fromBlock: string;
     /**
-     * Error Type
+     * Unsigned decimal integer encoded as a string.
      */
+    nextBlock: string;
+    /**
+     * Unsigned decimal integer encoded as a string.
+     */
+    scannedThrough: string | null;
+    lastBlockHash: string | null;
+    /**
+     * Unsigned decimal integer encoded as a string.
+     */
+    observedHead: string | null;
+    lastSuccessfulPoll: string | null;
+    lastError: string | null;
+    updatedAt: string;
+};
+
+export type Problem = {
     type: string;
-    /**
-     * Input
-     */
-    input?: unknown;
-    /**
-     * Context
-     */
-    ctx?: {
-        [key: string]: unknown;
-    };
+    title: string;
+    status: number;
+    detail: string;
+    requestId: string;
+};
+
+export type Health = {
+    status: 'ok' | 'ready';
+};
+
+export type EventPage = {
+    data: Array<Event>;
+    page: number;
+    offset: number;
+    hasMore: boolean;
+};
+
+export type MeterPage = {
+    data: Array<CurrentMeter>;
+    page: number;
+    offset: number;
+    hasMore: boolean;
 };
 
 /**
- * WeeklyResponse
- *
- * Response model for weekly enpoint.
+ * Inclusive lower block bound; decimal or hex.
  */
-export type WeeklyResponse = {
-    /**
-     * Day Of Week
-     */
-    day_of_week: number;
-    /**
-     * Total Energy
-     */
-    total_energy: number;
-};
+export type FromBlock = string;
 
 /**
- * WeeksEnergyRead
+ * Inclusive upper block bound. latest means the database scanned-through watermark, not the live chain head.
  */
-export type WeeksEnergyRead = {
-    /**
-     * Year
-     */
-    year: number;
-    /**
-     * Week
-     */
-    week: number;
-    /**
-     * Meter Id
-     */
-    meter_id: number;
-    /**
-     * Total Energy
-     */
-    total_energy: number;
-};
+export type ToBlock = string;
 
-export type ReadRootGetData = {
+/**
+ * Filter within the configured chain. A different chain returns an empty list.
+ */
+export type Chainid = string;
+
+/**
+ * Case-insensitive emitting address within the indexed stream.
+ */
+export type Address = string;
+
+/**
+ * Exact positional topic 0; StateCommitted has no topics 1-3.
+ */
+export type Topic0 = string;
+
+/**
+ * Exact positional topic 1; StateCommitted has no topics 1-3.
+ */
+export type Topic1 = string;
+
+/**
+ * Exact positional topic 2; StateCommitted has no topics 1-3.
+ */
+export type Topic2 = string;
+
+/**
+ * Exact positional topic 3; StateCommitted has no topics 1-3.
+ */
+export type Topic3 = string;
+
+/**
+ * Combine topic0 and topic1; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed.
+ */
+export type Topic01Opr = 'and' | 'or';
+
+/**
+ * Combine topic0 and topic2; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed.
+ */
+export type Topic02Opr = 'and' | 'or';
+
+/**
+ * Combine topic0 and topic3; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed.
+ */
+export type Topic03Opr = 'and' | 'or';
+
+/**
+ * Combine topic1 and topic2; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed.
+ */
+export type Topic12Opr = 'and' | 'or';
+
+/**
+ * Combine topic1 and topic3; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed.
+ */
+export type Topic13Opr = 'and' | 'or';
+
+/**
+ * Combine topic2 and topic3; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed.
+ */
+export type Topic23Opr = 'and' | 'or';
+
+/**
+ * One-based page; (page-1)*offset may not exceed 1000000. Use narrower block ranges for deep history.
+ */
+export type Page = number;
+
+/**
+ * Records per page; not a SQL row offset.
+ */
+export type Offset = number;
+
+/**
+ * Extension: event execution order, or meter ID order for current-meter lists.
+ */
+export type Sort = 'asc' | 'desc';
+
+export type GetLivenessData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/';
+    url: '/live';
 };
 
-export type ReadRootGetResponses = {
+export type GetLivenessErrors = {
     /**
-     * Successful Response
+     * Invalid query or path parameter
      */
-    200: unknown;
+    400: Problem;
+    /**
+     * No indexed record
+     */
+    404: Problem;
+    /**
+     * Internal error
+     */
+    500: Problem;
+    /**
+     * Indexer not ready
+     */
+    503: Problem;
+    /**
+     * Database query timeout
+     */
+    504: Problem;
 };
 
-export type GetRecentBlocksRecentBlocksGetData = {
+export type GetLivenessError = GetLivenessErrors[keyof GetLivenessErrors];
+
+export type GetLivenessResponses = {
+    /**
+     * Success
+     */
+    200: Health;
+};
+
+export type GetLivenessResponse = GetLivenessResponses[keyof GetLivenessResponses];
+
+export type GetReadinessData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/recent-blocks';
+    url: '/ready';
 };
 
-export type GetRecentBlocksRecentBlocksGetResponses = {
+export type GetReadinessErrors = {
     /**
-     * Response Get Recent Blocks Recent Blocks Get
-     *
-     * Successful Response
+     * Invalid query or path parameter
      */
-    200: Array<{
-        [key: string]: unknown;
-    }>;
+    400: Problem;
+    /**
+     * No indexed record
+     */
+    404: Problem;
+    /**
+     * Internal error
+     */
+    500: Problem;
+    /**
+     * Indexer not ready
+     */
+    503: Problem;
+    /**
+     * Database query timeout
+     */
+    504: Problem;
 };
 
-export type GetRecentBlocksRecentBlocksGetResponse = GetRecentBlocksRecentBlocksGetResponses[keyof GetRecentBlocksRecentBlocksGetResponses];
+export type GetReadinessError = GetReadinessErrors[keyof GetReadinessErrors];
 
-export type ExecuteRecentBlocksRecentBlocksPostData = {
+export type GetReadinessResponses = {
+    /**
+     * Success
+     */
+    200: Health;
+};
+
+export type GetReadinessResponse = GetReadinessResponses[keyof GetReadinessResponses];
+
+export type GetIndexerStatusData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/recent-blocks';
+    url: '/v1/status';
 };
 
-export type ExecuteRecentBlocksRecentBlocksPostResponses = {
+export type GetIndexerStatusErrors = {
     /**
-     * Successful Response
+     * Invalid query or path parameter
      */
-    200: unknown;
+    400: Problem;
+    /**
+     * No indexed record
+     */
+    404: Problem;
+    /**
+     * Internal error
+     */
+    500: Problem;
+    /**
+     * Indexer not ready
+     */
+    503: Problem;
+    /**
+     * Database query timeout
+     */
+    504: Problem;
 };
 
-export type GetWorldStateWorldStateGetData = {
+export type GetIndexerStatusError = GetIndexerStatusErrors[keyof GetIndexerStatusErrors];
+
+export type GetIndexerStatusResponses = {
+    /**
+     * Success
+     */
+    200: Status;
+};
+
+export type GetIndexerStatusResponse = GetIndexerStatusResponses[keyof GetIndexerStatusResponses];
+
+export type ListEventsData = {
     body?: never;
     path?: never;
-    query?: never;
-    url: '/world-state';
+    query?: {
+        /**
+         * Inclusive lower block bound; decimal or hex.
+         */
+        fromBlock?: string;
+        /**
+         * Inclusive upper block bound. latest means the database scanned-through watermark, not the live chain head.
+         */
+        toBlock?: string;
+        /**
+         * Filter within the configured chain. A different chain returns an empty list.
+         */
+        chainid?: string;
+        /**
+         * Case-insensitive emitting address within the indexed stream.
+         */
+        address?: string;
+        /**
+         * Exact positional topic 0; StateCommitted has no topics 1-3.
+         */
+        topic0?: string;
+        /**
+         * Exact positional topic 1; StateCommitted has no topics 1-3.
+         */
+        topic1?: string;
+        /**
+         * Exact positional topic 2; StateCommitted has no topics 1-3.
+         */
+        topic2?: string;
+        /**
+         * Exact positional topic 3; StateCommitted has no topics 1-3.
+         */
+        topic3?: string;
+        /**
+         * Combine topic0 and topic1; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed.
+         */
+        topic0_1_opr?: 'and' | 'or';
+        /**
+         * Combine topic0 and topic2; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed.
+         */
+        topic0_2_opr?: 'and' | 'or';
+        /**
+         * Combine topic0 and topic3; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed.
+         */
+        topic0_3_opr?: 'and' | 'or';
+        /**
+         * Combine topic1 and topic2; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed.
+         */
+        topic1_2_opr?: 'and' | 'or';
+        /**
+         * Combine topic1 and topic3; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed.
+         */
+        topic1_3_opr?: 'and' | 'or';
+        /**
+         * Combine topic2 and topic3; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed.
+         */
+        topic2_3_opr?: 'and' | 'or';
+        /**
+         * One-based page; (page-1)*offset may not exceed 1000000. Use narrower block ranges for deep history.
+         */
+        page?: number;
+        /**
+         * Records per page; not a SQL row offset.
+         */
+        offset?: number;
+        /**
+         * Extension: event execution order, or meter ID order for current-meter lists.
+         */
+        sort?: 'asc' | 'desc';
+    };
+    url: '/v1/events';
 };
 
-export type GetWorldStateWorldStateGetResponses = {
+export type ListEventsErrors = {
     /**
-     * Response Get World State World State Get
-     *
-     * Successful Response
+     * Invalid query or path parameter
      */
-    200: Array<{
-        [key: string]: unknown;
-    }>;
+    400: Problem;
+    /**
+     * No indexed record
+     */
+    404: Problem;
+    /**
+     * Internal error
+     */
+    500: Problem;
+    /**
+     * Indexer not ready
+     */
+    503: Problem;
+    /**
+     * Database query timeout
+     */
+    504: Problem;
 };
 
-export type GetWorldStateWorldStateGetResponse = GetWorldStateWorldStateGetResponses[keyof GetWorldStateWorldStateGetResponses];
+export type ListEventsError = ListEventsErrors[keyof ListEventsErrors];
 
-export type GetDailyBatchDailyBatchGetData = {
+export type ListEventsResponses = {
+    /**
+     * Success
+     */
+    200: EventPage;
+};
+
+export type ListEventsResponse = ListEventsResponses[keyof ListEventsResponses];
+
+export type GetEventData = {
+    body?: never;
+    path: {
+        /**
+         * Transaction hash
+         */
+        transactionHash: string;
+        /**
+         * Block-wide log index
+         */
+        logIndex: string;
+    };
+    query?: never;
+    url: '/v1/events/{transactionHash}/{logIndex}';
+};
+
+export type GetEventErrors = {
+    /**
+     * Invalid query or path parameter
+     */
+    400: Problem;
+    /**
+     * No indexed record
+     */
+    404: Problem;
+    /**
+     * Internal error
+     */
+    500: Problem;
+    /**
+     * Indexer not ready
+     */
+    503: Problem;
+    /**
+     * Database query timeout
+     */
+    504: Problem;
+};
+
+export type GetEventError = GetEventErrors[keyof GetEventErrors];
+
+export type GetEventResponses = {
+    /**
+     * Success
+     */
+    200: EventDetail;
+};
+
+export type GetEventResponse = GetEventResponses[keyof GetEventResponses];
+
+export type ListMetersData = {
     body?: never;
     path?: never;
-    query: {
+    query?: {
         /**
-         * Meter Ids
-         *
-         * Repeat param: ?meter_ids=1&meter_ids=2
+         * Inclusive lower block bound; decimal or hex.
          */
-        meter_ids: Array<number>;
+        fromBlock?: string;
+        /**
+         * Inclusive upper block bound. latest means the database scanned-through watermark, not the live chain head.
+         */
+        toBlock?: string;
+        /**
+         * Filter within the configured chain. A different chain returns an empty list.
+         */
+        chainid?: string;
+        /**
+         * Case-insensitive emitting address within the indexed stream.
+         */
+        address?: string;
+        /**
+         * Exact positional topic 0; StateCommitted has no topics 1-3.
+         */
+        topic0?: string;
+        /**
+         * Exact positional topic 1; StateCommitted has no topics 1-3.
+         */
+        topic1?: string;
+        /**
+         * Exact positional topic 2; StateCommitted has no topics 1-3.
+         */
+        topic2?: string;
+        /**
+         * Exact positional topic 3; StateCommitted has no topics 1-3.
+         */
+        topic3?: string;
+        /**
+         * Combine topic0 and topic1; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed.
+         */
+        topic0_1_opr?: 'and' | 'or';
+        /**
+         * Combine topic0 and topic2; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed.
+         */
+        topic0_2_opr?: 'and' | 'or';
+        /**
+         * Combine topic0 and topic3; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed.
+         */
+        topic0_3_opr?: 'and' | 'or';
+        /**
+         * Combine topic1 and topic2; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed.
+         */
+        topic1_2_opr?: 'and' | 'or';
+        /**
+         * Combine topic1 and topic3; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed.
+         */
+        topic1_3_opr?: 'and' | 'or';
+        /**
+         * Combine topic2 and topic3; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed.
+         */
+        topic2_3_opr?: 'and' | 'or';
+        /**
+         * One-based page; (page-1)*offset may not exceed 1000000. Use narrower block ranges for deep history.
+         */
+        page?: number;
+        /**
+         * Records per page; not a SQL row offset.
+         */
+        offset?: number;
+        /**
+         * Extension: event execution order, or meter ID order for current-meter lists.
+         */
+        sort?: 'asc' | 'desc';
     };
-    url: '/daily-batch';
+    url: '/v1/meters';
 };
 
-export type GetDailyBatchDailyBatchGetErrors = {
+export type ListMetersErrors = {
     /**
-     * Validation Error
+     * Invalid query or path parameter
      */
-    422: HttpValidationError;
-};
-
-export type GetDailyBatchDailyBatchGetError = GetDailyBatchDailyBatchGetErrors[keyof GetDailyBatchDailyBatchGetErrors];
-
-export type GetDailyBatchDailyBatchGetResponses = {
+    400: Problem;
     /**
-     * Response Get Daily Batch Daily Batch Get
-     *
-     * Successful Response
+     * No indexed record
      */
-    200: {
-        [key: string]: unknown;
-    };
+    404: Problem;
+    /**
+     * Internal error
+     */
+    500: Problem;
+    /**
+     * Indexer not ready
+     */
+    503: Problem;
+    /**
+     * Database query timeout
+     */
+    504: Problem;
 };
 
-export type GetDailyBatchDailyBatchGetResponse = GetDailyBatchDailyBatchGetResponses[keyof GetDailyBatchDailyBatchGetResponses];
+export type ListMetersError = ListMetersErrors[keyof ListMetersErrors];
 
-export type GetDailyMeterMeterIdDailyGetData = {
+export type ListMetersResponses = {
+    /**
+     * Success
+     */
+    200: MeterPage;
+};
+
+export type ListMetersResponse = ListMetersResponses[keyof ListMetersResponses];
+
+export type GetMeterData = {
     body?: never;
     path: {
         /**
-         * Meter Id
+         * Meter ID, 0 through 17179869183
          */
-        meter_id: number;
+        meterId: string;
     };
     query?: never;
-    url: '/meter/{meter_id}/daily';
+    url: '/v1/meters/{meterId}';
 };
 
-export type GetDailyMeterMeterIdDailyGetErrors = {
+export type GetMeterErrors = {
     /**
-     * Validation Error
+     * Invalid query or path parameter
      */
-    422: HttpValidationError;
-};
-
-export type GetDailyMeterMeterIdDailyGetError = GetDailyMeterMeterIdDailyGetErrors[keyof GetDailyMeterMeterIdDailyGetErrors];
-
-export type GetDailyMeterMeterIdDailyGetResponses = {
+    400: Problem;
     /**
-     * Response Get Daily Meter  Meter Id  Daily Get
-     *
-     * Successful Response
+     * No indexed record
      */
-    200: Array<DailyResponse>;
+    404: Problem;
+    /**
+     * Internal error
+     */
+    500: Problem;
+    /**
+     * Indexer not ready
+     */
+    503: Problem;
+    /**
+     * Database query timeout
+     */
+    504: Problem;
 };
 
-export type GetDailyMeterMeterIdDailyGetResponse = GetDailyMeterMeterIdDailyGetResponses[keyof GetDailyMeterMeterIdDailyGetResponses];
+export type GetMeterError = GetMeterErrors[keyof GetMeterErrors];
 
-export type GetWeeklyMeterMeterIdWeeklyGetData = {
+export type GetMeterResponses = {
+    /**
+     * Success
+     */
+    200: CurrentMeter;
+};
+
+export type GetMeterResponse = GetMeterResponses[keyof GetMeterResponses];
+
+export type ListMeterHistoryData = {
     body?: never;
     path: {
         /**
-         * Meter Id
+         * Meter ID, 0 through 17179869183
          */
-        meter_id: number;
-    };
-    query?: never;
-    url: '/meter/{meter_id}/weekly';
-};
-
-export type GetWeeklyMeterMeterIdWeeklyGetErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type GetWeeklyMeterMeterIdWeeklyGetError = GetWeeklyMeterMeterIdWeeklyGetErrors[keyof GetWeeklyMeterMeterIdWeeklyGetErrors];
-
-export type GetWeeklyMeterMeterIdWeeklyGetResponses = {
-    /**
-     * Response Get Weekly Meter  Meter Id  Weekly Get
-     *
-     * Successful Response
-     */
-    200: Array<WeeklyResponse>;
-};
-
-export type GetWeeklyMeterMeterIdWeeklyGetResponse = GetWeeklyMeterMeterIdWeeklyGetResponses[keyof GetWeeklyMeterMeterIdWeeklyGetResponses];
-
-export type GetWeeksOfYearMeterMeterIdWeeksYearGetData = {
-    body?: never;
-    path: {
-        /**
-         * Meter Id
-         */
-        meter_id: number;
-        /**
-         * Year
-         */
-        year: number;
-    };
-    query?: never;
-    url: '/meter/{meter_id}/weeks/{year}';
-};
-
-export type GetWeeksOfYearMeterMeterIdWeeksYearGetErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type GetWeeksOfYearMeterMeterIdWeeksYearGetError = GetWeeksOfYearMeterMeterIdWeeksYearGetErrors[keyof GetWeeksOfYearMeterMeterIdWeeksYearGetErrors];
-
-export type GetWeeksOfYearMeterMeterIdWeeksYearGetResponses = {
-    /**
-     * Response Get Weeks Of Year Meter  Meter Id  Weeks  Year  Get
-     *
-     * Successful Response
-     */
-    200: Array<WeeksEnergyRead>;
-};
-
-export type GetWeeksOfYearMeterMeterIdWeeksYearGetResponse = GetWeeksOfYearMeterMeterIdWeeksYearGetResponses[keyof GetWeeksOfYearMeterMeterIdWeeksYearGetResponses];
-
-export type GetMonthOfYearMeterMeterIdMonthMonthYearGetData = {
-    body?: never;
-    path: {
-        /**
-         * Meter Id
-         */
-        meter_id: number;
-        /**
-         * Year
-         */
-        year: number;
-        /**
-         * Month
-         */
-        month: number;
-    };
-    query?: never;
-    url: '/meter/{meter_id}/month/{month}/{year}';
-};
-
-export type GetMonthOfYearMeterMeterIdMonthMonthYearGetErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type GetMonthOfYearMeterMeterIdMonthMonthYearGetError = GetMonthOfYearMeterMeterIdMonthMonthYearGetErrors[keyof GetMonthOfYearMeterMeterIdMonthMonthYearGetErrors];
-
-export type GetMonthOfYearMeterMeterIdMonthMonthYearGetResponses = {
-    /**
-     * Response Get Month Of Year Meter  Meter Id  Month  Month   Year  Get
-     *
-     * Successful Response
-     */
-    200: Array<MonthlyEnergyRead>;
-};
-
-export type GetMonthOfYearMeterMeterIdMonthMonthYearGetResponse = GetMonthOfYearMeterMeterIdMonthMonthYearGetResponses[keyof GetMonthOfYearMeterMeterIdMonthMonthYearGetResponses];
-
-export type GetActivitiesMeterMeterIdActivitiesGetData = {
-    body?: never;
-    path: {
-        /**
-         * Meter Id
-         */
-        meter_id: number;
+        meterId: string;
     };
     query?: {
         /**
-         * After
+         * Inclusive lower block bound; decimal or hex.
          */
-        after?: string | null;
+        fromBlock?: string;
         /**
-         * Limit
+         * Inclusive upper block bound. latest means the database scanned-through watermark, not the live chain head.
          */
-        limit?: number;
+        toBlock?: string;
+        /**
+         * Filter within the configured chain. A different chain returns an empty list.
+         */
+        chainid?: string;
+        /**
+         * Case-insensitive emitting address within the indexed stream.
+         */
+        address?: string;
+        /**
+         * Exact positional topic 0; StateCommitted has no topics 1-3.
+         */
+        topic0?: string;
+        /**
+         * Exact positional topic 1; StateCommitted has no topics 1-3.
+         */
+        topic1?: string;
+        /**
+         * Exact positional topic 2; StateCommitted has no topics 1-3.
+         */
+        topic2?: string;
+        /**
+         * Exact positional topic 3; StateCommitted has no topics 1-3.
+         */
+        topic3?: string;
+        /**
+         * Combine topic0 and topic1; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed.
+         */
+        topic0_1_opr?: 'and' | 'or';
+        /**
+         * Combine topic0 and topic2; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed.
+         */
+        topic0_2_opr?: 'and' | 'or';
+        /**
+         * Combine topic0 and topic3; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed.
+         */
+        topic0_3_opr?: 'and' | 'or';
+        /**
+         * Combine topic1 and topic2; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed.
+         */
+        topic1_2_opr?: 'and' | 'or';
+        /**
+         * Combine topic1 and topic3; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed.
+         */
+        topic1_3_opr?: 'and' | 'or';
+        /**
+         * Combine topic2 and topic3; both must be supplied. Explicit pair clauses are ANDed; uncovered topics are individually ANDed. Without operators all supplied topics are ANDed.
+         */
+        topic2_3_opr?: 'and' | 'or';
+        /**
+         * One-based page; (page-1)*offset may not exceed 1000000. Use narrower block ranges for deep history.
+         */
+        page?: number;
+        /**
+         * Records per page; not a SQL row offset.
+         */
+        offset?: number;
+        /**
+         * Extension: event execution order, or meter ID order for current-meter lists.
+         */
+        sort?: 'asc' | 'desc';
     };
-    url: '/meter/{meter_id}/activities';
+    url: '/v1/meters/{meterId}/history';
 };
 
-export type GetActivitiesMeterMeterIdActivitiesGetErrors = {
+export type ListMeterHistoryErrors = {
     /**
-     * Validation Error
+     * Invalid query or path parameter
      */
-    422: HttpValidationError;
-};
-
-export type GetActivitiesMeterMeterIdActivitiesGetError = GetActivitiesMeterMeterIdActivitiesGetErrors[keyof GetActivitiesMeterMeterIdActivitiesGetErrors];
-
-export type GetActivitiesMeterMeterIdActivitiesGetResponses = {
+    400: Problem;
     /**
-     * Successful Response
+     * No indexed record
      */
-    200: ActivitiesResponse;
+    404: Problem;
+    /**
+     * Internal error
+     */
+    500: Problem;
+    /**
+     * Indexer not ready
+     */
+    503: Problem;
+    /**
+     * Database query timeout
+     */
+    504: Problem;
 };
 
-export type GetActivitiesMeterMeterIdActivitiesGetResponse = GetActivitiesMeterMeterIdActivitiesGetResponses[keyof GetActivitiesMeterMeterIdActivitiesGetResponses];
+export type ListMeterHistoryError = ListMeterHistoryErrors[keyof ListMeterHistoryErrors];
 
-export type GetProposalProposalTxHashGetData = {
+export type ListMeterHistoryResponses = {
+    /**
+     * Success
+     */
+    200: MeterPage;
+};
+
+export type ListMeterHistoryResponse = ListMeterHistoryResponses[keyof ListMeterHistoryResponses];
+
+export type GetWordData = {
     body?: never;
     path: {
         /**
-         * Tx Hash
+         * Slot ID, 0 through 4294967295
          */
-        tx_hash: string;
+        slot: string;
     };
     query?: never;
-    url: '/proposal/{tx_hash}';
+    url: '/v1/words/{slot}';
 };
 
-export type GetProposalProposalTxHashGetErrors = {
+export type GetWordErrors = {
     /**
-     * Validation Error
+     * Invalid query or path parameter
      */
-    422: HttpValidationError;
-};
-
-export type GetProposalProposalTxHashGetError = GetProposalProposalTxHashGetErrors[keyof GetProposalProposalTxHashGetErrors];
-
-export type GetProposalProposalTxHashGetResponses = {
+    400: Problem;
     /**
-     * Response Get Proposal Proposal  Tx Hash  Get
-     *
-     * Successful Response
+     * No indexed record
      */
-    200: Array<ProposalsResponse>;
+    404: Problem;
+    /**
+     * Internal error
+     */
+    500: Problem;
+    /**
+     * Indexer not ready
+     */
+    503: Problem;
+    /**
+     * Database query timeout
+     */
+    504: Problem;
 };
 
-export type GetProposalProposalTxHashGetResponse = GetProposalProposalTxHashGetResponses[keyof GetProposalProposalTxHashGetResponses];
+export type GetWordError = GetWordErrors[keyof GetWordErrors];
+
+export type GetWordResponses = {
+    /**
+     * Success
+     */
+    200: CurrentWord;
+};
+
+export type GetWordResponse = GetWordResponses[keyof GetWordResponses];

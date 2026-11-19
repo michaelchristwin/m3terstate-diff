@@ -1,56 +1,24 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { queries } from "#/queries";
-import type { RecentBlocksV2 } from "#/queries";
+import type { Event as IndexedEvent } from "#/client/types.gen";
+import { transactionUrl } from "#/event-history";
 import { Comparison } from "./Comparison";
-import * as schema from "../../ponder.schema";
-import { usePonderQuery } from "@ponder/react";
-import { asc } from "@ponder/client";
 
 export function ProposalWorkbench() {
-  const history = usePonderQuery({
-    queryFn: (db) =>
-      db.select().from(schema.commit).orderBy(asc(schema.commit.blockTime)),
-  });
-  // One offset keeps the two adjacent selections together.
+  const history = useQuery(queries.getHistory());
   const [offset, setOffset] = useState(1);
-  //const queryClient = useQueryClient();
-  //const history = useQuery(queries.getRecentBlocks());
-
-  const blocks = history.data ?? [];
-  const newBlock = blocks[blocks.length - offset];
-  const oldBlock = blocks[blocks.length - offset - 1];
-  const newProposal = useQuery({
-    ...queries.getProposals(newBlock?.txHash ?? ""),
-    enabled: !!newBlock && !!oldBlock,
-  });
-  const oldProposal = useQuery({
-    ...queries.getProposals(oldBlock?.txHash ?? ""),
-    enabled: !!newBlock && !!oldBlock,
-  });
-  // const refresh = useMutation({
-  //   ...queries.refreshRecentBlocks(),
-  //   onSuccess: async () => {
-  //     await queryClient.invalidateQueries({
-  //       queryKey: queries.getRecentBlocks().queryKey,
-  //     });
-  //     setOffset(1);
-  //   },
-  // });
-  const isLoading =
-    history.isLoading || newProposal.isLoading || oldProposal.isLoading;
-  const error = history.error ?? oldProposal.error ?? newProposal.error;
-  const ready =
-    !!oldBlock && !!newBlock && oldProposal.isSuccess && newProposal.isSuccess;
-  const canGoBack = offset + 1 < blocks.length;
-
-  const nextState = () => {
-    if (canGoBack) setOffset((value) => value + 1);
-  };
-  const retry = () => {
-    if (history.isError) void history.refetch();
-    if (oldProposal.isError) void oldProposal.refetch();
-    if (newProposal.isError) void newProposal.refetch();
+  const states = history.data?.states ?? [];
+  const newState = states[states.length - offset];
+  const oldState = states[states.length - offset - 1];
+  const newBlock = newState?.event;
+  const oldBlock = oldState?.event;
+  const isLoading = history.isPending;
+  const canGoBack = offset + 1 < states.length;
+  const nextState = () => { if (canGoBack) setOffset(value => value + 1); };
+  const refresh = async () => {
+    const result = await history.refetch();
+    if (result.isSuccess) setOffset(1);
   };
 
   return (
@@ -84,20 +52,20 @@ export function ProposalWorkbench() {
             label="Previous state"
             number="01"
             block={oldBlock}
-            loading={oldProposal.isLoading}
+            loading={isLoading}
           />
           <ProposalCard
             label="Newer state"
             number="02"
             block={newBlock}
-            loading={newProposal.isLoading}
+            loading={isLoading}
           />
         </section>
         <div className="controls">
           <span className="history-caption">
             {history.isLoading
               ? "Loading state history…"
-              : `${blocks.length} states in history${oldBlock ? ` · Comparing ${blocks.length - offset} and ${blocks.length - offset + 1}` : ""}`}
+              : `${states.length} states in history${oldBlock ? ` · Comparing ${states.length - offset} and ${states.length - offset + 1}` : ""}`}
           </span>
           <div className="actions">
             {offset > 1 && (
@@ -111,7 +79,7 @@ export function ProposalWorkbench() {
             )}
             <button
               className="secondary"
-              onClick={() => history.refetch()}
+              onClick={() => void refresh()}
               disabled={history.isPending || history.isRefetching}
             >
               {history.isRefetching ? "Refreshing…" : "Refresh history"}
@@ -119,51 +87,35 @@ export function ProposalWorkbench() {
             <button
               className="primary"
               onClick={nextState}
-              disabled={!canGoBack || isLoading || history.isPending}
+              disabled={!canGoBack || isLoading || history.isFetching}
             >
               Compare previous state <span>←</span>
             </button>
           </div>
         </div>
-        {history.isRefetchError && (
-          <p className="error" role="alert">
-            History refresh failed. {errorMessage(history.error)}
-          </p>
-        )}
-        {error ? (
+        {history.error ? (
           <div className="error" role="alert">
-            <p>Unable to load the comparison. {errorMessage(error)}</p>
-            <button className="secondary" onClick={retry}>
-              Retry
-            </button>
+            <p>Unable to load the comparison. {errorMessage(history.error)}</p>
+            <button className="secondary" onClick={() => void refresh()}>Retry</button>
           </div>
         ) : isLoading ? (
+          <section className="results empty" role="status">Loading states…</section>
+        ) : states.length < 2 ? (
           <section className="results empty" role="status">
-            Loading states…
+            At least two states are needed to compare states. Try refreshing history.
           </section>
-        ) : blocks.length < 2 ? (
-          <section className="results empty" role="status">
-            At least two states are needed to compare states. Try refreshing
-            history.
-          </section>
-        ) : ready ? (
-          <Comparison
-            key={`${oldBlock.txHash}:${newBlock.txHash}`}
-            oldValue={oldProposal.data}
-            newValue={newProposal.data}
-          />
+        ) : oldBlock && newState ? (
+          <Comparison key={`${newBlock?.transactionHash}:${newBlock?.logIndex}`} result={newState.diff} />
         ) : (
           <section className="results empty">
             This pair is no longer available.{" "}
-            <button className="secondary" onClick={() => setOffset(1)}>
-              Back to latest
-            </button>
+            <button className="secondary" onClick={() => setOffset(1)}>Back to latest</button>
           </section>
         )}
         <footer>
           <span>m3ters / Diff</span>
           <span>
-            State data from m3terscan · Comparison runs in your browser
+            State data from ponder.m3ter.ing · Comparison runs in your browser
           </span>
         </footer>
       </main>
@@ -185,7 +137,7 @@ function ProposalCard({
 }: {
   label: string;
   number: string;
-  block?: RecentBlocksV2;
+  block?: IndexedEvent;
   loading: boolean;
 }) {
   return (
@@ -196,26 +148,20 @@ function ProposalCard({
           {label}
         </span>
         <span className="state-status">
-          {loading
-            ? "Loading…"
-            : block
-              ? block.txHash
-                ? "Successful transaction"
-                : "Failed transaction"
-              : "Unavailable"}
+          {loading ? "Loading…" : block ? "Indexed commit" : "Unavailable"}
         </span>
       </div>
       <div className="state-meta">
         <span className="eyebrow">TRANSACTION HASH</span>
-        {block ? (
+        {block && transactionUrl(block) ? (
           <a
             className="transaction-link"
-            href={`https://etherscan.io/tx/${encodeURIComponent(block.txHash)}`}
+            href={transactionUrl(block)}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label={`View transaction ${block.txHash} on Etherscan (opens in a new tab)`}
+            aria-label={`View transaction ${block.transactionHash} on Etherscan (opens in a new tab)`}
           >
-            <code>{block.txHash}</code>
+            <code>{block.transactionHash}</code>
             <svg
               width="18"
               height="18"
@@ -229,20 +175,24 @@ function ProposalCard({
             </svg>
           </a>
         ) : (
-          <code>Waiting for state history…</code>
+          <code>{block?.transactionHash ?? "Waiting for state history…"}</code>
         )}
         <dl>
           <div>
             <dt>Block time</dt>
             <dd>
-              {block?.blockTime
-                ? new Date(Number(block.blockTime) * 1000).toLocaleString()
+              {block?.timestamp
+                ? new Date(Number(block.timestamp) * 1000).toLocaleString()
                 : "—"}
             </dd>
           </div>
           <div>
-            <dt>From</dt>
-            <dd>{block?.sender ?? "—"}</dd>
+            <dt>Block / log</dt>
+            <dd>{block ? `${block.blockNumber} / ${block.logIndex}` : "—"}</dd>
+          </div>
+          <div>
+            <dt>Network</dt>
+            <dd>{block?.chainId === "11155111" ? "Sepolia" : block?.chainId === "1" ? "Ethereum" : block?.chainId ?? "—"}</dd>
           </div>
         </dl>
       </div>
