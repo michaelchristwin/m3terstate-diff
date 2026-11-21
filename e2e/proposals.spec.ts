@@ -27,10 +27,13 @@ test('compares and exports only diffs, walks history, and reuses cached history'
   expect(result.rows[0].right).toEqual(['0', '3', '3'])
   expect(result.rows.every((row: { status: string }) => row.status === 'changed')).toBe(true)
   await page.getByRole('button', { name: 'Compare previous state' }).click()
-  await expect(page.getByText('3 states in history · Comparing 1 and 2')).toBeVisible()
+  await expect(page.getByText('4 states in history · Comparing 2 and 3')).toBeVisible()
+  await page.getByRole('button', { name: 'Compare previous state' }).click()
+  await expect(page.getByText('4 states in history · Comparing 1 and 2')).toBeVisible()
+  await expect(page.locator('.card-heading').first()).toContainText('Genesis state')
   await expect(page.getByRole('button', { name: 'Compare previous state' })).toBeDisabled()
   await page.getByRole('button', { name: 'Back to latest' }).click()
-  await expect(page.getByText('3 states in history · Comparing 2 and 3')).toBeVisible()
+  await expect(page.getByText('4 states in history · Comparing 3 and 4')).toBeVisible()
   expect(requested.filter(url => url.includes('/v1/events'))).toHaveLength(1)
   await page.screenshot({ path: 'test-results/rest-workbench.png', fullPage: true })
 })
@@ -52,10 +55,10 @@ test('waits for history before rendering and handles matching states', async ({ 
   await expect(page.locator('tbody tr')).toHaveCount(0)
 })
 
-test('insufficient history shows a helpful empty state', async ({ page }) => {
-  await mockHistory(page, events.slice(0, 1))
+test('empty history shows a helpful empty state', async ({ page }) => {
+  await mockHistory(page, [])
   await page.goto('/')
-  await expect(page.getByRole('status')).toContainText('At least two states')
+  await expect(page.getByRole('status')).toContainText('No indexed commits yet')
   await expect(page.getByRole('button', { name: 'Compare previous state' })).toBeDisabled()
 })
 
@@ -87,7 +90,7 @@ test('refresh uses GET, incorporates new commits, and resets to the latest pair'
   await page.getByRole('button', { name: 'Compare previous state' }).click()
   fresh = true
   await page.getByRole('button', { name: 'Refresh history' }).click()
-  await expect(page.getByText('4 states in history · Comparing 3 and 4')).toBeVisible()
+  await expect(page.getByText('5 states in history · Comparing 4 and 5')).toBeVisible()
   expect(gets).toBe(2)
 })
 
@@ -150,4 +153,33 @@ test('sparse unrelated updates retain earlier meter values and same-transaction 
   await expect(cells.nth(0)).toHaveText('0.1')
   await expect(cells.nth(3)).toHaveText('0.2')
   await expect(page.locator('.stat.energy strong')).toHaveText('0.1')
+})
+
+
+test('the first commit compares against static genesis zeros and exports the first diff', async ({ page }) => {
+  const genesisHash = '0xaeb2af588768e5fce1e407e673d38500a2992282b8ea36d46f9ad864c5216161'
+  await mockHistory(page, [event(1, [word(8, [['1250', '7'], ['500', '3']])])])
+  await page.goto('/')
+  await expect(page.getByText('2 states in history · Comparing 1 and 2')).toBeVisible()
+  await expect(page.locator('.card-heading').first()).toContainText('Genesis state')
+  await expect(page.getByText('Zero baseline', { exact: true })).toBeVisible()
+  const genesisCard = page.locator('.input-card').first()
+  await expect(genesisCard.getByText('12010691', { exact: true })).toBeVisible()
+  await expect(genesisCard.getByText('28 Oct 2026, 07:02:36 UTC', { exact: true })).toBeVisible()
+  await expect(genesisCard.getByText('Not specified', { exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '2 records differ.' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Compare previous state' })).toBeDisabled()
+  await expect(page.getByRole('link', { name: `View transaction ${genesisHash} on Etherscan (opens in a new tab)` }))
+    .toHaveAttribute('href', `https://sepolia.etherscan.io/tx/${genesisHash}`)
+  await expect(page.locator('tbody th')).toHaveText(['32', '33'])
+  await expect(page.locator('tbody tr td:nth-child(2)')).toHaveText(['0', '0'])
+  await expect(page.locator('tbody tr td:nth-child(3)')).toHaveText(['0', '0'])
+  await expect(page.locator('.stat.transactions strong')).toHaveText('10')
+  await expect(page.locator('.stat.energy strong')).toHaveText('1.75')
+  const downloadPromise = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'Export JSON' }).click()
+  const result = JSON.parse(await readFile((await (await downloadPromise).path())!, 'utf8'))
+  expect(result.rows.map((row: { left: string[] }) => row.left)).toEqual([['32', '0', '0'], ['33', '0', '0']])
+  await page.getByRole('button', { name: 'Refresh history' }).click()
+  await expect(page.getByText('2 states in history · Comparing 1 and 2')).toBeVisible()
 })

@@ -4,6 +4,17 @@ import type { DiffResult, RowDiff } from './diff'
 
 export type StateChange = { event: IndexedEvent; diff: DiffResult }
 export type StateHistory = { states: StateChange[]; status: Status }
+export type StateReference = Pick<IndexedEvent, 'chainId' | 'transactionHash'> &
+  Partial<Pick<IndexedEvent, 'blockNumber' | 'logIndex' | 'timestamp'>> & { isGenesis?: boolean }
+
+// Static zero baseline supplied for the first indexed commit. No API lookup is needed.
+export const GENESIS_STATE: StateReference = {
+  chainId: '11155111',
+  transactionHash: '0xaeb2af588768e5fce1e407e673d38500a2992282b8ea36d46f9ad864c5216161',
+  blockNumber: '12010691',
+  timestamp: '1793170956', // 2026-10-28 07:02:36 UTC
+  isGenesis: true,
+}
 
 const decimal = (value: unknown): value is string => typeof value === 'string' && /^\d+$/.test(value)
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object'
@@ -62,7 +73,7 @@ export function replayEvents(events: IndexedEvent[]): StateChange[] {
   })
 }
 
-export function transactionUrl(event: IndexedEvent) {
+export function transactionUrl(event: Pick<IndexedEvent, 'chainId' | 'transactionHash'>) {
   const hosts: Record<string, string> = { '1': 'https://etherscan.io', '11155111': 'https://sepolia.etherscan.io' }
   const host = hosts[event.chainId]
   return host ? `${host}/tx/${encodeURIComponent(event.transactionHash)}` : undefined

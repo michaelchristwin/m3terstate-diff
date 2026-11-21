@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { queries } from "#/queries";
-import type { Event as IndexedEvent } from "#/client/types.gen";
-import { transactionUrl } from "#/event-history";
+import { GENESIS_STATE, transactionUrl } from "#/event-history";
+import type { StateReference } from "#/event-history";
 import { Comparison } from "./Comparison";
 
 export function ProposalWorkbench() {
@@ -12,9 +12,9 @@ export function ProposalWorkbench() {
   const newState = states[states.length - offset];
   const oldState = states[states.length - offset - 1];
   const newBlock = newState?.event;
-  const oldBlock = oldState?.event;
+  const oldBlock: StateReference | undefined = oldState?.event ?? (newState ? GENESIS_STATE : undefined);
   const isLoading = history.isPending;
-  const canGoBack = offset + 1 < states.length;
+  const canGoBack = offset < states.length;
   const nextState = () => { if (canGoBack) setOffset(value => value + 1); };
   const refresh = async () => {
     const result = await history.refetch();
@@ -49,7 +49,7 @@ export function ProposalWorkbench() {
         </div>
         <section className="inputs" aria-label="Selected states">
           <ProposalCard
-            label="Previous state"
+            label={oldBlock?.isGenesis ? "Genesis state" : "Previous state"}
             number="01"
             block={oldBlock}
             loading={isLoading}
@@ -65,7 +65,7 @@ export function ProposalWorkbench() {
           <span className="history-caption">
             {history.isLoading
               ? "Loading state history…"
-              : `${states.length} states in history${oldBlock ? ` · Comparing ${states.length - offset} and ${states.length - offset + 1}` : ""}`}
+              : `${states.length ? states.length + 1 : 0} states in history${oldBlock ? ` · Comparing ${states.length - offset + 1} and ${states.length - offset + 2}` : ""}`}
           </span>
           <div className="actions">
             {offset > 1 && (
@@ -100,9 +100,9 @@ export function ProposalWorkbench() {
           </div>
         ) : isLoading ? (
           <section className="results empty" role="status">Loading states…</section>
-        ) : states.length < 2 ? (
+        ) : states.length === 0 ? (
           <section className="results empty" role="status">
-            At least two states are needed to compare states. Try refreshing history.
+            No indexed commits yet. The first commit will be compared with genesis. Try refreshing history.
           </section>
         ) : oldBlock && newState ? (
           <Comparison key={`${newBlock?.transactionHash}:${newBlock?.logIndex}`} result={newState.diff} />
@@ -137,7 +137,7 @@ function ProposalCard({
 }: {
   label: string;
   number: string;
-  block?: IndexedEvent;
+  block?: StateReference;
   loading: boolean;
 }) {
   return (
@@ -148,7 +148,7 @@ function ProposalCard({
           {label}
         </span>
         <span className="state-status">
-          {loading ? "Loading…" : block ? "Indexed commit" : "Unavailable"}
+          {loading ? "Loading…" : block?.isGenesis ? "Zero baseline" : block ? "Indexed commit" : "Unavailable"}
         </span>
       </div>
       <div className="state-meta">
@@ -182,13 +182,20 @@ function ProposalCard({
             <dt>Block time</dt>
             <dd>
               {block?.timestamp
-                ? new Date(Number(block.timestamp) * 1000).toLocaleString()
+                ? `${new Date(Number(block.timestamp) * 1000).toLocaleString('en-GB', {
+                    timeZone: 'UTC', year: 'numeric', month: 'short', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+                  })} UTC`
                 : "—"}
             </dd>
           </div>
           <div>
-            <dt>Block / log</dt>
-            <dd>{block ? `${block.blockNumber} / ${block.logIndex}` : "—"}</dd>
+            <dt>Block</dt>
+            <dd>{block?.blockNumber ?? "—"}</dd>
+          </div>
+          <div>
+            <dt>Log index</dt>
+            <dd>{block?.logIndex ?? (block?.isGenesis ? "Not specified" : "—")}</dd>
           </div>
           <div>
             <dt>Network</dt>
