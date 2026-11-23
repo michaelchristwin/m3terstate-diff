@@ -4,6 +4,7 @@ import { queries } from "#/queries";
 import { GENESIS_STATE, transactionUrl } from "#/event-history";
 import type { StateReference } from "#/event-history";
 import { Comparison } from "./Comparison";
+import { AppHeader } from "./AppHeader";
 
 export function ProposalWorkbench() {
   const history = useQuery(queries.getHistory());
@@ -23,16 +24,7 @@ export function ProposalWorkbench() {
 
   return (
     <>
-      <header>
-        <a className="brand" href="./">
-          <span className="mark">≠</span>m3ters
-          <span className="muted"> / </span>Diff
-        </a>
-        <span className="local">
-          <i />
-          State history explorer
-        </span>
-      </header>
+      <AppHeader page="diff" />
       <main>
         <div className="intro">
           <div className="eyebrow">THE STATE COMPARISON WORKBENCH</div>

@@ -48,6 +48,18 @@ The static genesis state is [the supplied Sepolia transaction](https://sepolia.e
 
 JSON retains `rows`, `differentIndices`, and `counts`. For REST diffs, `index` and `differentIndices` are **meter IDs**, not CSV line numbers. Each row's `left` and `right` are `[meterId, accountKWh, nonce]`. Only `changed` rows are exported; the other count fields remain zero for compatibility with the shared result type.
 
+## Daily commitment heatmap
+
+Open **Heatmap** in the navigation, or visit `/heatmap`. The page shows a monthly calendar with one cell per UTC day, aggregating all state commitments recorded that day. There are no per-meter heatmaps.
+
+- **Transaction count** sums nonce deltas across every changed meter in every commitment that day.
+- **Energy (kWh)** sums energy deltas across the same commitments. It is the day's combined energy change, not a sum of cumulative meter snapshots or a running lifetime total. The monthly energy card sums the daily totals.
+- The first commitment includes its comparison against the static zero genesis state. Genesis itself is not counted as a state commitment.
+- Select a day to inspect its totals and commitment breakdown, including Etherscan links. Hover for exact totals; keyboard users can focus days and navigate with arrow keys.
+- Month navigation is bounded by genesis and the loaded history. A day with no commitments has zero activity. Dates before genesis or beyond the latest indexed coverage are hatched as unavailable; the latest covered day may be partial.
+- The color scale is shared across the month for the chosen metric. Negative corrections are preserved and use a separate color. No-op commitments are still listed even when their deltas are zero.
+- Both pages share the cached REST history. Switching pages or months makes no extra API request; **Refresh history** explicitly reloads it.
+
 ## Reusable CSV comparison module
 
 `src/diff.ts` remains independent of React and the REST integration. It accepts CSV or text and compares records by position. Its indices are still zero-based record positions (including CSV headers). It is built into `dist/lib/` with declarations and requires Papa Parse when consumed separately. The app's REST comparisons use identity-based replay in `src/event-history.ts` instead.
@@ -64,6 +76,6 @@ pnpm build
 
 Unit tests cover sparse replay, exact units, zero lanes, order and identity, REST pagination, cancellation, consistency checks, and malformed/error responses, alongside the reusable CSV and delta modules. Browser tests mock the REST endpoints and cover navigation, caching, refresh, loading, retry, matching states, diff-only exports, pagination, tooltips, and mobile layout.
 
-`dist/` is a static production build ready for a static host. `dist/lib/` contains the reusable comparison module. History is replayed in browser memory; table pagination limits rendered rows, not history download or replay memory.
+`dist/` is a static production build ready for a static host. Configure SPA fallback to `index.html` so direct visits and reloads at `/heatmap` work. `dist/lib/` contains the reusable comparison module. History is replayed in browser memory; table pagination limits rendered rows, not history download or replay memory.
 
 The delivery ZIP includes the source, generated client, local OpenAPI schema, lockfile, tests, and `dist/`. It excludes `node_modules`, Git metadata, caches, test artifacts, and local environment files.
