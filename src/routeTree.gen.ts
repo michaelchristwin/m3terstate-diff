@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DiffRouteImport } from './routes/diff'
 import { Route as HeatmapRouteImport } from './routes/heatmap'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiffRoute = DiffRouteImport.update({
+  id: '/diff',
+  path: '/diff',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HeatmapRoute = HeatmapRouteImport.update({
@@ -25,27 +31,31 @@ const HeatmapRoute = HeatmapRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/diff': typeof DiffRoute
   '/heatmap': typeof HeatmapRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/diff': typeof DiffRoute
   '/heatmap': typeof HeatmapRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/diff': typeof DiffRoute
   '/heatmap': typeof HeatmapRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/heatmap'
+  fullPaths: '/' | '/diff' | '/heatmap'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/heatmap'
-  id: '__root__' | '/' | '/heatmap'
+  to: '/' | '/diff' | '/heatmap'
+  id: '__root__' | '/' | '/diff' | '/heatmap'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DiffRoute: typeof DiffRoute
   HeatmapRoute: typeof HeatmapRoute
 }
 
@@ -56,6 +66,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/diff': {
+      id: '/diff'
+      path: '/diff'
+      fullPath: '/diff'
+      preLoaderRoute: typeof DiffRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/heatmap': {
@@ -70,6 +87,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DiffRoute: DiffRoute,
   HeatmapRoute: HeatmapRoute,
 }
 export const routeTree = rootRouteImport

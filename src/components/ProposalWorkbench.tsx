@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { commitmentKey } from "#/diff-selection";
+import { parseHeatmapSearch } from "#/heatmap-selection";
 import { useQuery } from "@tanstack/react-query";
 import { queries } from "#/queries";
 import { GENESIS_STATE, transactionUrl } from "#/event-history";
@@ -8,24 +10,32 @@ import { AppHeader } from "./AppHeader";
 
 export function ProposalWorkbench() {
   const history = useQuery(queries.getHistory());
-  const [offset, setOffset] = useState(1);
+  const search = useSearch({ from: "/diff" });
+  const navigate = useNavigate({ from: "/diff" });
+  const heatmap = parseHeatmapSearch(search);
   const states = history.data?.states ?? [];
-  const newState = states[states.length - offset];
-  const oldState = states[states.length - offset - 1];
+  const selectedIndex = search.commit
+    ? states.findIndex(state => commitmentKey(state.event) === search.commit)
+    : states.length - 1;
+  const newState = states[selectedIndex];
+  const oldState = states[selectedIndex - 1];
   const newBlock = newState?.event;
   const oldBlock: StateReference | undefined = oldState?.event ?? (newState ? GENESIS_STATE : undefined);
   const isLoading = history.isPending;
-  const canGoBack = offset < states.length;
-  const nextState = () => { if (canGoBack) setOffset(value => value + 1); };
-  const refresh = async () => {
-    const result = await history.refetch();
-    if (result.isSuccess) setOffset(1);
+  const canGoBack = selectedIndex > 0;
+  const backToLatest = () => { void navigate({ search: heatmap }); };
+  const nextState = () => {
+    const previous = states[selectedIndex - 1];
+    if (previous) void navigate({ search: { ...heatmap, commit: commitmentKey(previous.event) } });
   };
+  // A shared link stays on the same commitment when new events arrive.
+  const refresh = () => history.refetch();
 
   return (
     <>
       <AppHeader page="diff" />
       <main>
+        <Link className="back-to-heatmap" to="/" search={heatmap}><span aria-hidden="true">←</span> Back to heatmap</Link>
         <div className="intro">
           <div className="eyebrow">THE STATE COMPARISON WORKBENCH</div>
           <h1>
@@ -57,13 +67,13 @@ export function ProposalWorkbench() {
           <span className="history-caption">
             {history.isLoading
               ? "Loading state history…"
-              : `${states.length ? states.length + 1 : 0} states in history${oldBlock ? ` · Comparing ${states.length - offset + 1} and ${states.length - offset + 2}` : ""}`}
+              : `${states.length ? states.length + 1 : 0} states in history${oldBlock ? ` · Comparing ${selectedIndex + 1} and ${selectedIndex + 2}` : ""}`}
           </span>
           <div className="actions">
-            {offset > 1 && (
+            {search.commit && (
               <button
                 className="secondary"
-                onClick={() => setOffset(1)}
+                onClick={backToLatest}
                 disabled={history.isPending}
               >
                 Back to latest
@@ -92,6 +102,11 @@ export function ProposalWorkbench() {
           </div>
         ) : isLoading ? (
           <section className="results empty" role="status">Loading states…</section>
+        ) : search.commit && !newState ? (
+          <section className="results empty" role="alert">
+            <p>The requested commitment was not found in the indexed history.</p>
+            <button className="secondary" onClick={backToLatest}>View latest diff</button>
+          </section>
         ) : states.length === 0 ? (
           <section className="results empty" role="status">
             No indexed commits yet. The first commit will be compared with genesis. Try refreshing history.
@@ -101,7 +116,7 @@ export function ProposalWorkbench() {
         ) : (
           <section className="results empty">
             This pair is no longer available.{" "}
-            <button className="secondary" onClick={() => setOffset(1)}>Back to latest</button>
+            <button className="secondary" onClick={backToLatest}>Back to latest</button>
           </section>
         )}
         <footer>
