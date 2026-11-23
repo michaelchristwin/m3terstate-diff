@@ -1,7 +1,8 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
+import { Link, useLocation, useNavigate, useSearch } from '@tanstack/react-router'
 import { commitmentKey } from '#/diff-selection'
+import { parseHeatmapSearch, type HeatmapSearch } from '#/heatmap-selection'
 import { queries } from '#/queries'
 import type { StateHistory } from '#/event-history'
 import { transactionUrl } from '#/event-history'
@@ -35,9 +36,11 @@ export function MonthlyHeatmap() {
 }
 
 function ActivityMonth({ history }: { history: StateHistory }) {
-  const [requestedMonth, setRequestedMonth] = useState<string | null>(null)
-  const [metric, setMetric] = useState<HeatMetric>('transactions')
-  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const search = parseHeatmapSearch(useSearch({ strict: false }))
+  const navigate = useNavigate()
+  const path = useLocation({ select: location => location.pathname === '/heatmap' ? '/heatmap' as const : '/' as const })
+  const requestedMonth = search.month
+  const metric = search.metric ?? 'transactions'
   const cells = useRef(new Map<string, HTMLButtonElement>())
   const range = useMemo(() => historyRange(history), [history])
   const firstMonth = range.firstDay.slice(0, 7), lastMonth = range.lastDay.slice(0, 7)
@@ -46,8 +49,25 @@ function ActivityMonth({ history }: { history: StateHistory }) {
     try { return { data: monthlyActivity(history, month), error: null } }
     catch (error) { return { data: null, error: error instanceof Error ? error.message : 'Unable to calculate daily activity.' } }
   }, [history, month])
-  if (!data) return <div className="error" role="alert">{error}</div>
-  const selectedDay = data.days.find(day => day.date === selectedDate) ?? [...data.days].reverse().find(day => day.commitments.length > 0) ?? data.days.find(day => day.transactions !== null) ?? data.days[0]
+  const selectedDay = data && (data.days.find(day => day.date === search.day) ?? [...data.days].reverse().find(day => day.commitments.length > 0) ?? data.days.find(day => day.transactions !== null) ?? data.days[0])
+  const selectedDate = selectedDay?.date
+  // Make automatic defaults shareable too, without adding a redundant browser history entry.
+  useEffect(() => {
+    if (selectedDate && (search.month !== month || search.day !== selectedDate || search.metric !== metric)) {
+      void navigate({ to: path, search: { month, day: selectedDate, metric }, replace: true, resetScroll: false })
+    }
+  }, [month, selectedDate, metric, search.month, search.day, search.metric, navigate, path])
+  if (!data || !selectedDay) return <div className="error" role="alert">{error}</div>
+  const view = { month, day: selectedDay.date, metric }
+  function updateView(next: HeatmapSearch) {
+    void navigate({ to: path, search: next, resetScroll: false })
+  }
+  function selectDay(day: string) {
+    if (day !== selectedDate) updateView({ ...view, day })
+  }
+  function setMetric(value: HeatMetric) {
+    if (value !== metric) updateView({ ...view, metric: value })
+  }
   const leadingDays = (new Date(`${month}-01T00:00:00Z`).getUTCDay() + 6) % 7
   const trailingDays = (7 - (leadingDays + data.days.length) % 7) % 7
   const label = metric === 'transactions' ? 'Transactions' : 'Energy'
@@ -56,7 +76,7 @@ function ActivityMonth({ history }: { history: StateHistory }) {
 
   function changeMonth(value: string) {
     if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(value) || value < firstMonth || value > lastMonth) return
-    setRequestedMonth(value); setSelectedDate(null)
+    updateView({ month: value, metric })
   }
   return <>
     <section className="activity-controls" aria-label="Heatmap controls">
@@ -92,13 +112,13 @@ function ActivityMonth({ history }: { history: StateHistory }) {
               ref={node => { if (node) cells.current.set(day.date, node); else cells.current.delete(day.date) }}
               className={`calendar-day heat-${level < 0 ? 'unavailable' : level}${day[metric]?.startsWith('-') ? ' heat-negative' : ''}`}
               aria-label={cellLabel} aria-pressed={selectedDay.date === day.date} title={cellLabel}
-              onFocus={() => setSelectedDate(day.date)} onClick={() => setSelectedDate(day.date)}
+              onClick={() => selectDay(day.date)}
               onKeyDown={event => {
                 const delta: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }
                 if (!(event.key in delta)) return
                 event.preventDefault()
                 const target = data.days[index + delta[event.key]]
-                if (target) cells.current.get(target.date)?.focus()
+                if (target) { cells.current.get(target.date)?.focus(); selectDay(target.date) }
               }}>
               <span className="calendar-date">{Number(day.date.slice(-2))}</span>
               <strong>{day[metric] ?? '—'}</strong>
@@ -124,7 +144,7 @@ function ActivityMonth({ history }: { history: StateHistory }) {
               {href ? <a href={href} target="_blank" rel="noopener noreferrer" aria-label={`View commitment ${event.transactionHash}, log ${event.logIndex} on Etherscan (opens in a new tab)`}>{shortHash}<span aria-hidden="true"> ↗</span></a> : <code>{shortHash}</code>}
               <div className="commitment-values"><span>{transactions} tx</span><span>{energy} kWh</span></div>
               <small>{changedMeters} changed {changedMeters === 1 ? 'meter' : 'meters'}</small>
-              <Link className="commitment-diff-link" to="/diff" search={{ commit: commitmentKey(event) }} aria-label={`View diff for commitment ${event.transactionHash}, log ${event.logIndex}`}>View diff</Link>
+              <Link className="commitment-diff-link" to="/diff" search={{ ...view, commit: commitmentKey(event) }} aria-label={`View diff for commitment ${event.transactionHash}, log ${event.logIndex}`}>View diff<span aria-hidden="true">→</span></Link>
             </li>
           })}</ol> : <p className="detail-empty">No state commitments recorded on this day.</p>}
         </>}

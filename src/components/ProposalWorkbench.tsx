@@ -1,5 +1,6 @@
-import { useNavigate, useSearch } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { commitmentKey } from "#/diff-selection";
+import { parseHeatmapSearch } from "#/heatmap-selection";
 import { useQuery } from "@tanstack/react-query";
 import { queries } from "#/queries";
 import { GENESIS_STATE, transactionUrl } from "#/event-history";
@@ -11,6 +12,7 @@ export function ProposalWorkbench() {
   const history = useQuery(queries.getHistory());
   const search = useSearch({ from: "/diff" });
   const navigate = useNavigate({ from: "/diff" });
+  const heatmap = parseHeatmapSearch(search);
   const states = history.data?.states ?? [];
   const selectedIndex = search.commit
     ? states.findIndex(state => commitmentKey(state.event) === search.commit)
@@ -21,10 +23,10 @@ export function ProposalWorkbench() {
   const oldBlock: StateReference | undefined = oldState?.event ?? (newState ? GENESIS_STATE : undefined);
   const isLoading = history.isPending;
   const canGoBack = selectedIndex > 0;
-  const backToLatest = () => { void navigate({ search: {} }); };
+  const backToLatest = () => { void navigate({ search: heatmap }); };
   const nextState = () => {
     const previous = states[selectedIndex - 1];
-    if (previous) void navigate({ search: { commit: commitmentKey(previous.event) } });
+    if (previous) void navigate({ search: { ...heatmap, commit: commitmentKey(previous.event) } });
   };
   // A shared link stays on the same commitment when new events arrive.
   const refresh = () => history.refetch();
@@ -33,6 +35,7 @@ export function ProposalWorkbench() {
     <>
       <AppHeader page="diff" />
       <main>
+        <Link className="back-to-heatmap" to="/" search={heatmap}><span aria-hidden="true">←</span> Back to heatmap</Link>
         <div className="intro">
           <div className="eyebrow">THE STATE COMPARISON WORKBENCH</div>
           <h1>

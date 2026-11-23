@@ -14,6 +14,10 @@ async function mockHistory(page: Page, data = events) {
   await page.route(`${api}/v1/events?*`, route => route.fulfill({ json: { data, page: 1, offset: 1000, hasMore: false } }))
 }
 
+async function expectView(page: Page, month: string, day: string, metric: string) {
+  await expect(page).toHaveURL(url => url.searchParams.get('month') === month && url.searchParams.get('day') === day && url.searchParams.get('metric') === metric)
+}
+
 test('calendar sums commitments by day and switches transaction and energy heat', async ({ page }) => {
   await mockHistory(page)
   await page.goto('/')
@@ -145,4 +149,82 @@ test('invalid and missing commitments show clear errors instead of an unrelated 
   await expect(page.locator('tbody tr')).toHaveCount(0)
   await page.getByRole('button', { name: 'View latest diff' }).click()
   await expect(page.locator('.stat.transactions strong')).toHaveText('2')
+})
+
+test('heatmap context survives diff navigation, reload, and both return links', async ({ page }) => {
+  await mockHistory(page)
+  await page.goto('/')
+  const nav = page.getByRole('navigation', { name: 'Main navigation' })
+  await expect(nav.getByRole('link')).toHaveText(['Heatmap', 'Diff'])
+  await page.getByRole('button', { name: 'Previous month' }).click()
+  await page.locator('[data-day="2026-10-31"]').click()
+  await page.getByRole('button', { name: 'Energy (kWh)', exact: true }).click()
+  await expectView(page, '2026-10', '2026-10-31', 'energy')
+  const heatmapUrl = page.url()
+  const diff = page.getByRole('link', { name: /^View diff for commitment/ })
+  await expect(diff).toHaveCSS('background-color', 'rgb(34, 70, 51)')
+  expect((await diff.boundingBox())!.height).toBeGreaterThanOrEqual(44)
+  await diff.click()
+  await expect(page.locator('.input-card').first()).toContainText('Genesis state')
+  await page.reload()
+  await nav.getByRole('link', { name: 'Heatmap' }).click()
+  await expect(page).toHaveURL(heatmapUrl)
+  await expect(page.locator('[data-day="2026-10-31"]')).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('button', { name: 'Energy (kWh)', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await diff.click()
+  await page.getByRole('link', { name: 'Back to heatmap' }).click()
+  await expect(page).toHaveURL(heatmapUrl)
+  await page.reload()
+  await expect(page.locator('[data-day="2026-10-31"]')).toHaveAttribute('aria-pressed', 'true')
+})
+
+test('direct shared diff retains its heatmap context while comparing other states', async ({ page }) => {
+  await mockHistory(page)
+  await page.goto(`/diff?commit=${hash(3)}:0&month=2026-11&day=2026-11-01&metric=energy`)
+  await expect(page.locator('.input-card').last()).toContainText(hash(3))
+  await page.getByRole('button', { name: 'Compare previous state' }).click()
+  await expect(page.locator('.input-card').last()).toContainText(hash(2))
+  await page.getByRole('button', { name: 'Back to latest', exact: true }).click()
+  await expect(page.locator('.input-card').last()).toContainText(hash(4))
+  await page.getByRole('link', { name: 'Back to heatmap' }).click()
+  await expect(page.locator('[data-day="2026-11-01"]')).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('button', { name: 'Energy (kWh)', exact: true })).toHaveAttribute('aria-pressed', 'true')
+})
+
+test('heatmap URLs support direct visits and browser back/forward for day, metric, and month', async ({ page }) => {
+  await mockHistory(page)
+  await page.goto('/heatmap?day=2026-11-01&metric=energy')
+  await expect(page.locator('[data-day="2026-11-01"]')).toHaveAttribute('aria-pressed', 'true')
+  await expectView(page, '2026-11', '2026-11-01', 'energy')
+  const initial = page.url()
+  await page.locator('[data-day="2026-11-03"]').click()
+  await expect(page).toHaveURL(/day=2026-11-03/)
+  await page.getByRole('button', { name: 'Transaction count', exact: true }).click()
+  await expect(page).toHaveURL(/metric=transactions/)
+  await page.getByRole('button', { name: 'Previous month' }).click()
+  await expectView(page, '2026-10', '2026-10-31', 'transactions')
+  await page.goBack()
+  await expect(page.locator('[data-day="2026-11-03"]')).toHaveAttribute('aria-pressed', 'true')
+  await page.goBack()
+  await expect(page.getByRole('button', { name: 'Energy (kWh)', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await page.goBack()
+  await expect(page).toHaveURL(initial)
+  await page.goForward()
+  await expect(page.locator('[data-day="2026-11-03"]')).toHaveAttribute('aria-pressed', 'true')
+  await page.reload()
+  await expect(page.getByRole('complementary', { name: 'Selected day commitments' })).toContainText('No state commitments recorded on this day.')
+})
+
+test('heatmap defaults and invalid or out-of-range dates resolve to a shareable view', async ({ page }) => {
+  await mockHistory(page)
+  for (const url of ['/', '/?month=2026-02&day=2026-02-28&metric=bad', '/?month=wrong&day=2026-11-31']) {
+    await page.goto(url)
+    await expectView(page, '2026-11', '2026-11-02', 'transactions')
+    await expect(page.locator('[data-day="2026-11-02"]')).toHaveAttribute('aria-pressed', 'true')
+  }
+  await page.goto('/?month=2026-11&day=2026-11-21&metric=energy')
+  await expect(page.getByRole('complementary', { name: 'Selected day commitments' })).toContainText('No indexed data for this day.')
+  await page.getByRole('navigation').getByRole('link', { name: 'Diff', exact: true }).click()
+  await page.getByRole('link', { name: 'Back to heatmap' }).click()
+  await expect(page.locator('[data-day="2026-11-21"]')).toHaveAttribute('aria-pressed', 'true')
 })

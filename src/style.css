@@ -48,6 +48,10 @@ pre{font-size:13px}
 
 
 .calendar-metric-controls{display:flex;padding:0 26px 18px}
-.commitment-list a.commitment-diff-link{display:block;width:fit-content;margin-top:12px;padding:8px 12px;border:1px solid #ccd8c4;border-radius:5px;font:600 13px 'DM Sans',sans-serif;text-decoration:none;background:#f2f6ed;color:#224633}
-.commitment-diff-link:focus-visible{outline:2px solid #608847;outline-offset:3px}
+.commitment-list a.commitment-diff-link{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;width:100%;margin-top:14px;padding:11px 15px;border:1px solid #224633;border-radius:7px;font:600 13px 'DM Sans',sans-serif;text-decoration:none;background:#224633;color:#fff;box-shadow:0 2px 3px #193d311f;transition:background .15s,box-shadow .15s}
+.commitment-list a.commitment-diff-link:hover{background:#163525;box-shadow:0 3px 6px #193d3133}
+.commitment-list a.commitment-diff-link:active{background:#102b1d;box-shadow:none}
+.commitment-diff-link:focus-visible{outline:3px solid #608847;outline-offset:3px}
+.back-to-heatmap{display:inline-flex;align-items:center;gap:8px;min-height:44px;margin-bottom:12px;color:#34583e;font-size:14px;font-weight:600;text-underline-offset:4px}
+.back-to-heatmap:hover{color:#163525}.back-to-heatmap:focus-visible{outline:2px solid #608847;outline-offset:3px}
 @media(max-width:560px){.calendar-metric-controls{padding-inline:16px}}
