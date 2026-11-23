@@ -14,7 +14,7 @@ test('compares and exports only diffs, walks history, and reuses cached history'
   const requested: string[] = []
   page.on('request', request => { if (request.url().startsWith(api)) requested.push(request.url()) })
   await mockHistory(page)
-  await page.goto('/')
+  await page.goto('/diff')
   await expect(page.getByRole('heading', { name: '1 record differs.' })).toBeVisible()
   await expect(page.locator('tbody tr')).toHaveCount(1)
   await expect(page.locator('tr.equal')).toHaveCount(0)
@@ -46,7 +46,7 @@ test('waits for history before rendering and handles matching states', async ({ 
     await gate
     await route.fulfill({ json: { data: [event(1), event(2, event(1).words)], page: 1, offset: 1000, hasMore: false } })
   })
-  await page.goto('/')
+  await page.goto('/diff')
   await expect(page.getByRole('status')).toHaveText('Loading states…')
   await expect(page.getByRole('button', { name: 'Export JSON' })).toHaveCount(0)
   release()
@@ -57,7 +57,7 @@ test('waits for history before rendering and handles matching states', async ({ 
 
 test('empty history shows a helpful empty state', async ({ page }) => {
   await mockHistory(page, [])
-  await page.goto('/')
+  await page.goto('/diff')
   await expect(page.getByRole('status')).toContainText('No indexed commits yet')
   await expect(page.getByRole('button', { name: 'Compare previous state' })).toBeDisabled()
 })
@@ -68,7 +68,7 @@ test('REST errors surface problem details and allow retry', async ({ page }) => 
   await page.route(`${api}/v1/events?*`, route => route.fulfill(fail ?
     { status: 503, json: { detail: 'Indexer replay in progress' } } :
     { json: { data: events, page: 1, offset: 1000, hasMore: false } }))
-  await page.goto('/')
+  await page.goto('/diff')
   await expect(page.getByRole('alert')).toContainText('Indexer replay in progress')
   await expect(page.getByRole('button', { name: 'Export JSON' })).toHaveCount(0)
   fail = false
@@ -76,7 +76,7 @@ test('REST errors surface problem details and allow retry', async ({ page }) => 
   await expect(page.getByRole('heading', { name: '1 record differs.' })).toBeVisible()
 })
 
-test('refresh uses GET, incorporates new commits, and resets to the latest pair', async ({ page }) => {
+test('refresh uses GET and preserves the selected commitment when new commits arrive', async ({ page }) => {
   let gets = 0
   let fresh = false
   await mockHistory(page)
@@ -85,11 +85,13 @@ test('refresh uses GET, incorporates new commits, and resets to the latest pair'
     gets++
     return route.fulfill({ json: { data: fresh ? [...events, event(4)] : events, page: 1, offset: 1000, hasMore: false } })
   })
-  await page.goto('/')
+  await page.goto('/diff')
   await expect(page.getByRole('heading', { name: '1 record differs.' })).toBeVisible()
   await page.getByRole('button', { name: 'Compare previous state' }).click()
   fresh = true
   await page.getByRole('button', { name: 'Refresh history' }).click()
+  await expect(page.getByText('5 states in history · Comparing 2 and 3')).toBeVisible()
+  await page.getByRole('button', { name: 'Back to latest' }).click()
   await expect(page.getByText('5 states in history · Comparing 4 and 5')).toBeVisible()
   expect(gets).toBe(2)
 })
@@ -97,14 +99,14 @@ test('refresh uses GET, incorporates new commits, and resets to the latest pair'
 test('malformed history displays an error', async ({ page }) => {
   await mockHistory(page)
   await page.route(`${api}/v1/events?*`, route => route.fulfill({ json: { data: [{}], page: 1, offset: 1000, hasMore: false } }))
-  await page.goto('/')
+  await page.goto('/diff')
   await expect(page.getByRole('alert')).toContainText('invalid state history')
 })
 
 test('diff-only display ignores old localStorage preference and has no snapshot controls', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('m3ters-diff:only-differences', 'false'))
   await mockHistory(page, [event(1, [word(0, [['100', '10'], ['300', '2']])]), event(2, [word(0, [['300', '8'], ['300', '2']])])])
-  await page.goto('/')
+  await page.goto('/diff')
   await expect(page.getByRole('heading', { name: '1 record differs.' })).toBeVisible()
   await expect(page.locator('tbody tr')).toHaveCount(1)
   await expect(page.getByRole('checkbox')).toHaveCount(0)
@@ -124,7 +126,7 @@ test('paginates changed meters, keeps complete totals, and uses Sepolia links', 
   const before = Array.from({ length: 51 }, (_, i) => word(i, [['100', '1'], ['100', '1'], ['100', '1'], ['100', '1']]))
   const after = Array.from({ length: 51 }, (_, i) => word(i, [['101', '2'], ['101', '2'], ['100', '1'], ['100', '1']]))
   await mockHistory(page, [event(1, before), event(2, after)])
-  await page.goto('/')
+  await page.goto('/diff')
   await expect(page.getByRole('heading', { name: '102 records differ.' })).toBeVisible()
   await expect(page.locator('tbody tr')).toHaveCount(100)
   await expect(page.locator('.stat.transactions strong')).toHaveText('102')
@@ -147,7 +149,7 @@ test('sparse unrelated updates retain earlier meter values and same-transaction 
     event(2, [word(2, [['500', '3']])]),
     event(3, [word(0, [['200', '2']])], { blockNumber: '2', transactionHash: hash(2), logIndex: '1' }),
   ])
-  await page.goto('/')
+  await page.goto('/diff')
   await expect(page.getByRole('heading', { name: '1 record differs.' })).toBeVisible()
   const cells = page.locator('tbody tr td')
   await expect(cells.nth(0)).toHaveText('0.1')
@@ -159,7 +161,7 @@ test('sparse unrelated updates retain earlier meter values and same-transaction 
 test('the first commit compares against static genesis zeros and exports the first diff', async ({ page }) => {
   const genesisHash = '0xaeb2af588768e5fce1e407e673d38500a2992282b8ea36d46f9ad864c5216161'
   await mockHistory(page, [event(1, [word(8, [['1250', '7'], ['500', '3']])])])
-  await page.goto('/')
+  await page.goto('/diff')
   await expect(page.getByText('2 states in history · Comparing 1 and 2')).toBeVisible()
   await expect(page.locator('.card-heading').first()).toContainText('Genesis state')
   await expect(page.getByText('Zero baseline', { exact: true })).toBeVisible()

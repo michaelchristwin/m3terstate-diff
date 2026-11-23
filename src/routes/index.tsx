@@ -1,4 +1,4 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { ProposalWorkbench } from '#/components/ProposalWorkbench'
+import { MonthlyHeatmap } from '#/components/MonthlyHeatmap'
 
-export const Route = createFileRoute('/')({ component: ProposalWorkbench })
+export const Route = createFileRoute('/')({ component: MonthlyHeatmap })

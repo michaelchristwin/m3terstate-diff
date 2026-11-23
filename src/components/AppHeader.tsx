@@ -6,8 +6,8 @@ export function AppHeader({ page }: { page: 'diff' | 'heatmap' }) {
       <span className="mark">≠</span>m3ters<span className="muted"> / </span>{page === 'diff' ? 'Diff' : 'Activity'}
     </Link>
     <nav className="page-nav" aria-label="Main navigation">
-      <Link to="/" aria-current={page === 'diff' ? 'page' : undefined}>Diff</Link>
-      <Link to="/heatmap" aria-current={page === 'heatmap' ? 'page' : undefined}>Heatmap</Link>
+      <Link to="/diff" search={{}} aria-current={page === 'diff' ? 'page' : undefined}>Diff</Link>
+      <Link to="/" aria-current={page === 'heatmap' ? 'page' : undefined}>Heatmap</Link>
     </nav>
   </header>
 }

@@ -1,5 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
+import { commitmentKey } from '#/diff-selection'
 import { queries } from '#/queries'
 import type { StateHistory } from '#/event-history'
 import { transactionUrl } from '#/event-history'
@@ -63,10 +65,6 @@ function ActivityMonth({ history }: { history: StateHistory }) {
         <label><span>Month</span><input type="month" aria-label="Month" value={month} min={firstMonth} max={lastMonth} onChange={event => changeMonth(event.target.value)} /></label>
         <button className="secondary" aria-label="Next month" disabled={month === lastMonth} onClick={() => changeMonth(shiftMonth(month, 1))}>›</button>
       </div>
-      <div className="metric-switch" role="group" aria-label="Heat metric">
-        <button aria-pressed={metric === 'transactions'} onClick={() => setMetric('transactions')}>Transaction count</button>
-        <button aria-pressed={metric === 'energy'} onClick={() => setMetric('energy')}>Energy (kWh)</button>
-      </div>
     </section>
     <div className="activity-stats" aria-label="Month summary">
       <div><span>Transactions this month</span><strong data-testid="month-transactions">{data.totalTransactions}</strong><small>Summed across all commitments</small></div>
@@ -76,6 +74,12 @@ function ActivityMonth({ history }: { history: StateHistory }) {
     <div className="calendar-layout">
       <section className={`results calendar-panel metric-${metric}`} aria-label="Daily commitment heatmap">
         <div className="results-heading"><div><div className="eyebrow">{label.toUpperCase()} PER UTC DAY</div><h2>{monthLabel(month)}</h2></div><span className="calendar-zone">UTC</span></div>
+        <div className="calendar-metric-controls">
+          <div className="metric-switch" role="group" aria-label="Heat metric">
+            <button aria-pressed={metric === 'transactions'} onClick={() => setMetric('transactions')}>Transaction count</button>
+            <button aria-pressed={metric === 'energy'} onClick={() => setMetric('energy')}>Energy (kWh)</button>
+          </div>
+        </div>
         <p className="calendar-description">{metric === 'transactions' ? 'Total nonce changes across every commitment that day.' : 'Total energy changes across every commitment that day, in kWh.'}</p>
         <div className="calendar-weekdays" aria-hidden="true">{['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => <span key={day}>{day}</span>)}</div>
         <div className="calendar-grid" role="group" aria-label={`${monthLabel(month)} daily ${label.toLowerCase()}`}>
@@ -120,6 +124,7 @@ function ActivityMonth({ history }: { history: StateHistory }) {
               {href ? <a href={href} target="_blank" rel="noopener noreferrer" aria-label={`View commitment ${event.transactionHash}, log ${event.logIndex} on Etherscan (opens in a new tab)`}>{shortHash}<span aria-hidden="true"> ↗</span></a> : <code>{shortHash}</code>}
               <div className="commitment-values"><span>{transactions} tx</span><span>{energy} kWh</span></div>
               <small>{changedMeters} changed {changedMeters === 1 ? 'meter' : 'meters'}</small>
+              <Link className="commitment-diff-link" to="/diff" search={{ commit: commitmentKey(event) }} aria-label={`View diff for commitment ${event.transactionHash}, log ${event.logIndex}`}>View diff</Link>
             </li>
           })}</ol> : <p className="detail-empty">No state commitments recorded on this day.</p>}
         </>}
